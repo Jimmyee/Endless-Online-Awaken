@@ -27,11 +27,13 @@ public:
 
     shared_ptr<Config> config;
     shared_ptr<EOClient> eoclient;
+
     shared_ptr<EMF> emf;
     shared_ptr<EIF> eif;
     shared_ptr<ENF> enf;
     shared_ptr<ESF> esf;
     shared_ptr<ECF> ecf;
+
     shared_ptr<GUI> gui;
     shared_ptr<Map> map;
 };

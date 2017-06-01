@@ -94,10 +94,7 @@ void EOClient::HandleData(std::string data)
 
 void EOClient::RegisterHandler(PacketFamily family, PacketAction action, handler_func func)
 {
-    if(this->handlers.find(family) == this->handlers.end())
-    {
-        this->handlers[family][action] = func;
-    }
+    this->handlers[family][action] = func;
 }
 
 void EOClient::UnregisterHandler(PacketFamily family, PacketAction action)

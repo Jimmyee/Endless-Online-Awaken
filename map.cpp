@@ -1,11 +1,12 @@
 #include "map.hpp"
+#include "singleton.hpp"
 
-Map::Map()
+Map::Map(int id)
 {
-
+    this->Load(id);
 }
 
 void Map::Load(int id)
 {
-    this->emf = std::shared_ptr<EMF>(new EMF(id));
+    S::GetInstance().emf = std::shared_ptr<EMF>(new EMF(id));
 }

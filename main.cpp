@@ -1,26 +1,40 @@
 #include <SFML/Graphics.hpp>
 #include <TGUI/TGUI.hpp>
 
-#include "config.hpp"
-#include "eoclient.hpp"
+#include "singleton.hpp"
+
+void initialize_data()
+{
+    S &s = S::GetInstance();
+
+    s.config = shared_ptr<Config>(new Config("./config.ini"));
+    s.eif = shared_ptr<EIF>(new EIF("./pub/dat001.eif"));
+    s.enf = shared_ptr<ENF>(new ENF("./pub/dtn001.enf"));
+    s.esf = shared_ptr<ESF>(new ESF("./pub/dsl001.esf"));
+    s.ecf = shared_ptr<ECF>(new ECF("./pub/dat001.ecf"));
+    s.eoclient = shared_ptr<EOClient>(new EOClient());
+
+    puts("Data files initialized");
+}
 
 int main()
 {
+    S &s = S::GetInstance();
+    initialize_data();
+
     sf::RenderWindow window(sf::VideoMode(640, 480), "SFML works!");
-    tgui::Gui gui{window};
 
-    Config config;
-    config.Load("config.ini");
-    EOClient eoclient(config);
-
-    if(eoclient.Connect())
+    if(s.eoclient->Connect())
     {
-        eoclient.RequestInit();
+        s.eoclient->RequestInit();
     }
 
     while (window.isOpen())
     {
-        eoclient.Tick();
+        if(s.eoclient.get())
+        {
+            s.eoclient->Tick();
+        }
 
         sf::Event event;
         while (window.pollEvent(event))
@@ -28,12 +42,18 @@ int main()
             if (event.type == sf::Event::Closed)
                 window.close();
 
-            gui.handleEvent(event);
+            if(s.gui.get())
+            {
+                s.gui->HandleEvent(event);
+            }
         }
 
         window.clear();
 
-        gui.draw();
+        if(s.gui.get())
+        {
+            s.gui->Draw();
+        }
 
         window.display();
     }

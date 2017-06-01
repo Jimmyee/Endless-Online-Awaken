@@ -6,13 +6,13 @@
 
 #include "eodata.hpp"
 
+// class responsible for rendering the map
 class Map
 {
 public:
-    std::shared_ptr<EMF> emf;
     sf::RenderWindow *window;
 
-    Map();
+    Map(int id);
     void Load(int id);
 };
 

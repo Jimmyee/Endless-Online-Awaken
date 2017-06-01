@@ -3,9 +3,7 @@
 
 #include "../packet.hpp"
 
-class EOClient;
-
-void INIT_INIT(EOClient *client, PacketReader reader);
-void Connection_Player(EOClient *client, PacketReader reader);
+void INIT_INIT(PacketReader reader);
+void Connection_Player(PacketReader reader);
 
 #endif // HANDLERS_HPP_INCLUDED

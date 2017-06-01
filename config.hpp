@@ -9,6 +9,7 @@ class Config
 public:
     std::unordered_map<std::string, std::string> values;
 
+    Config(std::string filename);
     bool Load(std::string filename);
 };
 

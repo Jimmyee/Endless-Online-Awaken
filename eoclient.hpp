@@ -30,7 +30,6 @@ public:
 private:
     sf::TcpSocket socket;
     bool connected;
-    Config config;
 
     std::string send_buffer;
     std::string recv_buffer;
@@ -40,7 +39,7 @@ private:
     unsigned int length;
     std::string data;
 
-    typedef void(*handler_func)(EOClient *client, PacketReader packet); // TODO; object pointer
+    typedef void(*handler_func)(PacketReader packet);
     std::map<PacketFamily, std::map<PacketAction, handler_func>> handlers;
 
     int seq_start;
@@ -48,13 +47,12 @@ private:
 
     int session_id;
 
-public:
-    PacketProcessor processor;
     ClientState state;
 
-    EOClient();
-    EOClient(Config config);
-    void Load(Config config);
+public:
+    PacketProcessor processor;
+
+    EOClient(bool initialize = false);
     bool Connect();
     void Disconnect();
     void Send(PacketBuilder packet);
@@ -62,10 +60,11 @@ public:
     void RegisterHandler(PacketFamily family, PacketAction action, handler_func func);
     void UnregisterHandler(PacketFamily family, PacketAction action);
     void Tick();
+    void Reset();
     void InitSequenceByte(unsigned char s1, unsigned char s2);
     void UpdateSequenceByte(unsigned short s1, unsigned char s2);
     int GenSequenceByte();
-    void Reset();
+    ClientState GetState();
 
     void RequestInit();
     void Initialize(PacketReader reader);

@@ -3,6 +3,11 @@
 #include <fstream>
 #include <cstdio>
 
+Config::Config(std::string filename)
+{
+    this->Load(filename);
+}
+
 bool Config::Load(std::string filename)
 {
     std::ifstream file(filename, std::ios::in | std::ios::ate);

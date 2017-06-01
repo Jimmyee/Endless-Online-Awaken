@@ -1,29 +1,29 @@
 #include "eoclient.hpp"
+#include "singleton.hpp"
 
 #include <string>
 
-EOClient::EOClient()
+EOClient::EOClient(bool initialize)
 {
     this->Reset();
-}
 
-EOClient::EOClient(Config config)
-{
-    this->Reset();
-    this->Load(config);
+	this->RegisterHandler(PacketFamily::PACKET_F_INIT, PacketAction::PACKET_A_INIT, INIT_INIT);
 
-    this->RegisterHandler(PacketFamily::PACKET_F_INIT, PacketAction::PACKET_A_INIT, INIT_INIT);
-}
-
-void EOClient::Load(Config config)
-{
-    this->config = config;
+	if(initialize)
+    {
+        if(this->Connect())
+        {
+            this->RequestInit();
+        }
+    }
 }
 
 bool EOClient::Connect()
 {
-    std::string address = this->config.values["Address"];
-    unsigned short port = std::atoi(this->config.values["Port"].c_str());
+    shared_ptr<Config> config = S::GetInstance().config;
+
+    std::string address = config->values["Address"];
+    unsigned short port = std::atoi(config->values["Port"].c_str());
 
     printf("Socket: Connecting to %s:%i\n", address.c_str(), port);
     sf::Socket::Status status = this->socket.connect(address, port);
@@ -88,18 +88,26 @@ void EOClient::HandleData(std::string data)
     it = this->handlers.find(reader.Family());
     if(it != this->handlers.end())
     {
-        this->handlers[reader.Family()][reader.Action()](this, reader);
+        this->handlers[reader.Family()][reader.Action()](reader);
     }
 }
 
 void EOClient::RegisterHandler(PacketFamily family, PacketAction action, handler_func func)
 {
-    this->handlers[family][action] = func;
+    if(this->handlers.find(family) == this->handlers.end())
+    {
+        this->handlers[family][action] = func;
+    }
 }
 
 void EOClient::UnregisterHandler(PacketFamily family, PacketAction action)
 {
-    this->handlers.erase(this->handlers.find(family));
+    std::map<PacketFamily, std::map<PacketAction, handler_func>>::iterator it;
+    it = this->handlers.find(family);
+    if(it != this->handlers.end())
+    {
+        this->handlers.erase(it);
+    }
 }
 
 void EOClient::Tick()
@@ -226,6 +234,18 @@ void EOClient::Tick()
     }
 }
 
+void EOClient::Reset()
+{
+    this->packet_state = EOClient::ReadLen1;
+    std::fill((std::begin((this->data))), (std::end((this->data))), '\0');
+    this->data.erase();
+    this->length = 0;
+	this->seq_start = 0;
+	this->seq = 0;
+	this->session_id = 0;
+	this->state = EOClient::Uninitialized;
+}
+
 void EOClient::InitSequenceByte(unsigned char s1, unsigned char s2)
 {
     this->seq_start = s2 + s1 * 7 - 13;
@@ -245,16 +265,9 @@ int EOClient::GenSequenceByte()
     return this->seq_start + this->seq;
 }
 
-void EOClient::Reset()
+EOClient::ClientState EOClient::GetState()
 {
-    this->packet_state = EOClient::ReadLen1;
-    std::fill((std::begin((this->data))), (std::end((this->data))), '\0');
-    this->data.erase();
-    this->length = 0;
-	this->seq_start = 0;
-	this->seq = 0;
-	this->state = EOClient::Uninitialized;
-	this->session_id = 0;
+    return this->state;
 }
 
 void EOClient::RequestInit()
@@ -262,12 +275,12 @@ void EOClient::RequestInit()
     PacketBuilder builder(PacketFamily::PACKET_F_INIT, PacketAction::PACKET_A_INIT);
     unsigned int challenge = 72000;
     builder.AddThree(challenge);
-    builder.AddChar(2);
-    builder.AddChar(2);
-    builder.AddChar(28);
-    builder.AddChar(2);
-    builder.AddChar(2);
-    builder.AddString("56781234567");
+    builder.AddChar(2); // ?
+    builder.AddChar(2); // ?
+    builder.AddChar(28); // version
+    builder.AddChar(2); // ?
+    builder.AddChar(2); // ?
+    builder.AddString("56781234567"); // HDD ID
 
     this->Send(builder);
 }

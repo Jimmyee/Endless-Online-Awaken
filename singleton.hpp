@@ -4,6 +4,7 @@
 #include "config.hpp"
 #include "eoclient.hpp"
 #include "eodata.hpp"
+#include "gfxloader.hpp"
 #include "gui.hpp"
 #include "map.hpp"
 
@@ -33,6 +34,8 @@ public:
     shared_ptr<ENF> enf;
     shared_ptr<ESF> esf;
     shared_ptr<ECF> ecf;
+
+    shared_ptr<GFXLoader> gfx_loader;
 
     shared_ptr<GUI> gui;
     shared_ptr<Map> map;

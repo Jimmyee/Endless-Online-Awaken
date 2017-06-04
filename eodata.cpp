@@ -408,7 +408,7 @@ void EIF::Read(const std::string& filename)
 		this->data.pop_back();
 	}
 
-	printf("%i items loaded.\n", this->data.size()-1);
+	printf("%i items loaded.\n", (int)this->data.size()-1);
 
 	std::fclose(fh);
 }
@@ -506,7 +506,7 @@ void ENF::Read(const std::string& filename)
 		this->data.pop_back();
 	}
 
-	printf("%i npc types loaded.\n", this->data.size()-1);
+	printf("%i npc types loaded.\n", (int)this->data.size()-1);
 
 	std::fclose(fh);
 }
@@ -609,7 +609,7 @@ void ESF::Read(const std::string& filename)
 		this->data.pop_back();
 	}
 
-	printf("%i spells loaded.\n", this->data.size()-1);
+	printf("%i spells loaded.\n", (int)this->data.size()-1);
 
 	std::fclose(fh);
 }
@@ -690,7 +690,7 @@ void ECF::Read(const std::string& filename)
 		this->data.pop_back();
 	}
 
-	printf("%i classes loaded.\n", this->data.size()-1);
+	printf("%i classes loaded.\n", (int)this->data.size()-1);
 
 	std::fclose(fh);
 }

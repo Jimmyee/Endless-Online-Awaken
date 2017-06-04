@@ -51,7 +51,6 @@ bool Config::Load(std::string filename)
         std::string value = filedata_str.substr(equation_pos + 1, pos - equation_pos - 1);
         filedata_str = filedata_str.substr(pos + 1);
         this->values[keyword] = value;
-        printf("['%s' = '%s']\n", keyword.c_str(), value.c_str());
     } while(pos != std::string::npos);
 
     return true;

@@ -64,7 +64,7 @@ public:
     void InitSequenceByte(unsigned char s1, unsigned char s2);
     void UpdateSequenceByte(unsigned short s1, unsigned char s2);
     int GenSequenceByte();
-    ClientState GetState();
+    ClientState &GetState();
 
     void RequestInit();
     void Initialize(PacketReader reader);

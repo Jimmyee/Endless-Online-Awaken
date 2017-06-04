@@ -1,17 +1,28 @@
 #ifndef GUI_HPP_INCLUDED
 #define GUI_HPP_INCLUDED
 
-#include <TGUI/TGUI.hpp>
+#include <SFML/Graphics.hpp>
+#include <memory>
+
+using std::shared_ptr;
 
 class GUI
 {
 private:
-    tgui::Gui tgui;
+    sf::RenderWindow &window;
+    sf::Clock clock;
+    shared_ptr<sf::Sprite> bg;
+    std::string version_address;
 
 public:
-    GUI(sf::RenderWindow& window);
-    void HandleEvent(sf::Event &event);
+    GUI(sf::RenderWindow &window_);
+    ~GUI();
+    void ProcessEvent(sf::Event &event);
+    void Update();
+    void Process();
     void Draw();
+
+    void StartScreen();
 };
 
 #endif // GUI_HPP_INCLUDED

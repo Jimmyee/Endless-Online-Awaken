@@ -233,6 +233,7 @@ void EOClient::Tick()
 
 void EOClient::Reset()
 {
+    this->connected = false;
     this->packet_state = EOClient::ReadLen1;
     std::fill((std::begin((this->data))), (std::end((this->data))), '\0');
     this->data.erase();
@@ -262,7 +263,7 @@ int EOClient::GenSequenceByte()
     return this->seq_start + this->seq;
 }
 
-EOClient::ClientState EOClient::GetState()
+EOClient::ClientState &EOClient::GetState()
 {
     return this->state;
 }

@@ -21,10 +21,12 @@ public:
         return instance;
     }
 private:
-    S() {}
+    S() { call_exit = false; }
 public:
     S(S const&)               = delete;
     void operator=(S const&)  = delete;
+
+    bool call_exit;
 
     shared_ptr<Config> config;
     shared_ptr<EOClient> eoclient;

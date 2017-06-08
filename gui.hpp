@@ -40,7 +40,6 @@ public:
     void Disconnected();
 
     void StartScreen();
-    void LoginBox();
 };
 
 #endif // GUI_HPP_INCLUDED

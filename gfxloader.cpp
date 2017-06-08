@@ -40,7 +40,7 @@ shared_ptr<GFXLoader::GFXResource> GFXLoader::GetResource(int id)
     }
 }
 
-shared_ptr<sf::Texture> GFXLoader::LoadTexture(int gfx_id, int tex_id)
+shared_ptr<sf::Texture> GFXLoader::LoadTexture(int gfx_id, int tex_id, bool mask)
 {
     shared_ptr<GFXResource> resource = this->GetResource(gfx_id);
 
@@ -60,7 +60,7 @@ shared_ptr<sf::Texture> GFXLoader::LoadTexture(int gfx_id, int tex_id)
 
         if(loaded)
         {
-            image.createMaskFromColor(sf::Color(0, 0, 0), 0);
+            if(mask) image.createMaskFromColor(sf::Color(0, 0, 0), 0);
             new_texture.loadFromImage(image);
             texture = this->resources[gfx_id]->NewTexture(new_texture, tex_id);
         }

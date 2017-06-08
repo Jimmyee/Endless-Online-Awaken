@@ -44,7 +44,12 @@ bool EOClient::Connect()
 void EOClient::Disconnect()
 {
     this->socket.disconnect();
-    this->connected = false;
+    this->Reset();
+}
+
+bool EOClient::Connected()
+{
+    return this->connected;
 }
 
 void EOClient::Send(PacketBuilder packet)
@@ -132,13 +137,11 @@ void EOClient::Tick()
         else if(status == sf::Socket::Status::Disconnected)
         {
             puts("Socket: disconnected");
-            this->connected = false;
             this->Reset();
         }
         else if(status == sf::Socket::Status::Error)
         {
             puts("Socket: error while receiving data");
-            this->connected = false;
             this->Reset();
         }
 
@@ -227,6 +230,11 @@ void EOClient::Tick()
             {
                 this->send_buffer.erase(sent);
             }
+        }
+
+        if(!this->connected)
+        {
+            S::GetInstance().gui->Disconnected();
         }
     }
 }

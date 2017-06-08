@@ -55,6 +55,7 @@ public:
     EOClient(bool initialize = false);
     bool Connect();
     void Disconnect();
+    bool Connected();
     void Send(PacketBuilder packet);
     void HandleData(std::string data);
     void RegisterHandler(PacketFamily family, PacketAction action, handler_func func);

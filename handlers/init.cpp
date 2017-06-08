@@ -2,6 +2,7 @@
 #include "../packet.hpp"
 #include "../singleton.hpp"
 #include "../const/init.hpp"
+#include "../gui.hpp"
 
 #include <cstdio>
 

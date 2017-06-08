@@ -26,16 +26,11 @@ int main()
 
     initialize_data_handlers();
 
-    sf::RenderWindow window(sf::VideoMode(640, 480), "Endless Online Awaken");
+    sf::RenderWindow window(sf::VideoMode(640, 480), "Endless Online Awaken", sf::Style::Close);
 
     s.eoclient = shared_ptr<EOClient>(new EOClient());
     s.gfx_loader = shared_ptr<GFXLoader>(new GFXLoader());
     s.gui = shared_ptr<GUI>(new GUI(window));
-
-    /*if(s.eoclient->Connect())
-    {
-        s.eoclient->RequestInit();
-    }*/
 
     while (window.isOpen())
     {
@@ -50,11 +45,25 @@ int main()
             s.gui->ProcessEvent(event);
 
             if (event.type == sf::Event::Closed)
-                window.close();
+            {
+                s.call_exit = true;
+            }
         }
 
         s.gui->Update();
         s.gui->Process();
+
+        //ImGui::ShowTestWindow();
+
+        if(s.call_exit)
+        {
+            if(s.eoclient->Connected())
+            {
+                s.eoclient->Disconnect();
+            }
+
+            window.close();
+        }
 
         window.clear();
 
@@ -62,6 +71,8 @@ int main()
 
         window.display();
     }
+
+    s.gui->Shutdown();
 
     return 0;
 }

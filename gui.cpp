@@ -7,6 +7,12 @@
 #include <chrono>
 #include <random>
 
+/*
+
+TODO: character list
+
+*/
+
 GUI::GUI(sf::RenderWindow& window_)
 : window(window_)
 {
@@ -21,6 +27,7 @@ GUI::GUI(sf::RenderWindow& window_)
     ImGui::GetStyle().FramePadding = ImVec2(1, 1);
 
     ImGui::GetIO().Fonts->AddFontFromFileTTF("./font/micross.ttf", 10.f);
+    ImGui::GetIO().Fonts->AddFontFromFileTTF("./font/micross.ttf", 16.f);
     ImGui::SFML::UpdateFontTexture();
 
     ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Button, ImVec4(239, 222, 189, 0.2));
@@ -73,7 +80,7 @@ void GUI::Process()
     }
     else if(this->state == State::Login)
     {
-        this->LoginBox();
+        //this->LoginBox();
     }
 
     if(this->connection_closed)
@@ -209,27 +216,70 @@ void GUI::StartScreen()
         break;
     }
 
-    ImGui::End();
-}
+    if(this->state == State::Login)
+    {
+        ImGuiWindowFlags window_flags = 0;
+        window_flags |= ImGuiWindowFlags_NoTitleBar;
+        window_flags |= ImGuiWindowFlags_NoResize;
+        window_flags |= ImGuiWindowFlags_NoMove;
+        window_flags |= ImGuiWindowFlags_NoScrollbar;
 
-void GUI::LoginBox()
-{
-    S &s = S::GetInstance();
+        shared_ptr<sf::Texture> tex = s.gfx_loader->LoadTexture(1, 2, false);
 
-    ImGuiWindowFlags window_flags = 0;
-    window_flags |= ImGuiWindowFlags_NoTitleBar;
-    window_flags |= ImGuiWindowFlags_NoResize;
-    window_flags |= ImGuiWindowFlags_NoMove;
-    window_flags |= ImGuiWindowFlags_NoScrollbar;
+        ImGui::SetNextWindowSize(tex->getSize());
+        ImGui::SameLine();
+        ImGui::SetNextWindowPos(ImVec2(264, 278));
+        ImGui::SetCursorPos(ImVec2(264, 278));
 
-    shared_ptr<sf::Texture> tex = s.gfx_loader->LoadTexture(1, 2, false);
+        ImGui::BeginChild("login_box", ImVec2(tex->getSize()), NULL, window_flags);
+        ImGui::SetCursorPos(ImVec2(0, 0));
+        ImGui::Image(*tex);
 
-    ImGui::SetNextWindowSize(tex->getSize());
-    ImGui::SetNextWindowPos(ImVec2(264, 278));
+        ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_FrameBg, ImColor(165, 130, 105, 255));
+        ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Text, ImColor(0, 0, 0, 255));
+        ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[1]);
 
-    ImGui::Begin("login_box", new bool(true), window_flags);
-    ImGui::SetCursorPos(ImVec2(0, 0));
-    ImGui::Image(*tex);
-    // TODO: buttons and edit boxes
+        static char buf_username[32] = "";
+        static char buf_password[32] = "";
+        ImGui::SameLine();
+        ImGui::PushItemWidth(140);
+        ImGui::SetCursorPos(ImVec2(136, 33));
+        ImGui::PushID(1);
+        ImGui::InputText("", buf_username, sizeof(buf_username));
+        ImGui::GetWindowDrawList()->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), IM_COL32(0,0,0,255));
+        ImGui::PopID();
+
+        ImGui::SetCursorPos(ImVec2(136, 68));
+        ImGui::PushID(2);
+        ImGui::InputText("", buf_password, sizeof(buf_password), ImGuiInputTextFlags_Password);
+        ImGui::GetWindowDrawList()->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), IM_COL32(0,0,0,255));
+        ImGui::PopID();
+
+        ImGui::PopItemWidth();
+        ImGui::PopStyleColor(2);
+        ImGui::PopFont();
+
+        tex = s.gfx_loader->LoadTexture(1, 15);
+        sf::Sprite btn1(*tex, sf::IntRect(0, 0, 91, 29));
+        sf::Sprite btn2(*tex, sf::IntRect(91, 0, 91, 29));
+        ImGui::SetCursorPos(ImVec2(94, 104));
+        ImGui::PushID(3);
+        ImGui::ImageAnimButton(btn1, btn2);
+        // handle "Connect" button
+        ImGui::PopID();
+
+        btn1.setTextureRect(sf::IntRect(0, 29, 91, 29));
+        btn2.setTextureRect(sf::IntRect(91, 29, 91, 29));
+        ImGui::SetCursorPos(ImVec2(186 + ImGui::GetStyle().FramePadding.x, 104));
+        ImGui::PushID(4);
+        if(ImGui::ImageAnimButton(btn1, btn2))
+        {
+            this->state = State::StartScreen;
+        }
+        ImGui::PopID();
+
+        ImGui::EndChild();
+    }
+
     ImGui::End();
 }

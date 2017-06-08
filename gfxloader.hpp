@@ -25,7 +25,7 @@ private:
     shared_ptr<GFXResource> GetResource(int id);
 
 public:
-    shared_ptr<sf::Texture> LoadTexture(int gfx_id, int tex_id);
+    shared_ptr<sf::Texture> LoadTexture(int gfx_id, int tex_id, bool mask = true);
 };
 
 #endif // GFXLOADER_HPP_INCLUDED

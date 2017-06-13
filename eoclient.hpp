@@ -1,25 +1,28 @@
 #ifndef EOCLIENT_HPP_INCLUDED
 #define EOCLIENT_HPP_INCLUDED
 
-#include <SFML/Network.hpp>
-
-#include <string>
-
 #include "config.hpp"
 #include "packet.hpp"
 #include "handlers/handlers.hpp"
+#include "character.hpp"
+
+#include <SFML/Network.hpp>
+#include <string>
+#include <memory>
+
+using std::shared_ptr;
 
 class EOClient // this is an "eo connection specialist" - it will be mainly used for management of connection and packets
 {
 public:
-    enum PacketState
+    enum class PacketState
     {
         ReadLen1,
         ReadLen2,
         ReadData
     };
 
-    enum ClientState
+    enum class State
     {
         Uninitialized,
         Initialized,
@@ -47,10 +50,11 @@ private:
 
     int session_id;
 
-    ClientState state;
+    State state;
 
 public:
     PacketProcessor processor;
+    std::vector<shared_ptr<Character>> account_characters;
 
     EOClient(bool initialize = false);
     bool Connect();
@@ -65,10 +69,17 @@ public:
     void InitSequenceByte(unsigned char s1, unsigned char s2);
     void UpdateSequenceByte(unsigned short s1, unsigned char s2);
     int GenSequenceByte();
-    ClientState &GetState();
+    void SetState(State state);
+    State GetState();
 
     void RequestInit();
     void Initialize(PacketReader reader);
+    void LoginRequest(std::string username, std::string password);
+    void AccountRequest(std::string username);
+    void AccountCreate(std::string username, std::string password, std::string real_name, std::string location, std::string email);
+    void RequestSelectCharacter(unsigned int id);
+
+    shared_ptr<Character> GetAccountCharacter(std::size_t index);
 };
 
 #endif // EOCLIENT_HPP_INCLUDED

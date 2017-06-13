@@ -8,17 +8,25 @@
 
 void INIT_INIT(PacketReader reader)
 {
-    shared_ptr<EOClient> eoclient = S::GetInstance().eoclient;
+    S &s = S::GetInstance();
 
     InitReply result(static_cast<InitReply>(reader.GetByte()));
 
-    if(result == INIT_OK)
+    if(result == InitReply::OK)
     {
-        eoclient->Initialize(reader);
+        s.eoclient->Initialize(reader);
+
+        s.eoclient->RegisterHandler(PacketFamily::Connection, PacketAction::Player, Connection_Player);
+        s.eoclient->RegisterHandler(PacketFamily::Login, PacketAction::Reply, Login_Reply);
+        s.eoclient->RegisterHandler(PacketFamily::Account, PacketAction::Reply, Account_Reply);
+        s.eoclient->RegisterHandler(PacketFamily::Welcome, PacketAction::Reply, Welcome_Reply);
+
+        PacketBuilder packet(PacketFamily::Connection, PacketAction::Accept);
+        s.eoclient->Send(packet);
     }
     else
     {
         puts("EOClient: init failed");
-        eoclient->Disconnect();
+        s.eoclient->Disconnect();
     }
 }

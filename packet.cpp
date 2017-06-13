@@ -33,56 +33,56 @@ std::string PacketProcessor::GetFamilyName(PacketFamily family)
 {
 	switch (family)
 	{
-		case PACKET_INTERNAL: return "INTERNAL";
-		case PACKET_CONNECTION: return "Connection";
-		case PACKET_ACCOUNT: return "Account";
-		case PACKET_CHARACTER: return "Character";
-		case PACKET_LOGIN: return "Login";
-		case PACKET_WELCOME: return "Welcome";
-		case PACKET_WALK: return "Walk";
-		case PACKET_FACE: return "Face";
-		case PACKET_CHAIR: return "Chair";
-		case PACKET_EMOTE: return "Emote";
-		case PACKET_ATTACK: return "Attack";
-		case PACKET_SPELL: return "Spell";
-		case PACKET_SHOP: return "Shop";
-		case PACKET_ITEM: return "Item";
-		case PACKET_STATSKILL: return "StatSkill";
-		case PACKET_GLOBAL: return "Global";
-		case PACKET_TALK: return "Talk";
-		case PACKET_WARP: return "Warp";
-		case PACKET_JUKEBOX: return "Jukebox";
-		case PACKET_PLAYERS: return "Players";
-		case PACKET_AVATAR: return "Avatar";
-		case PACKET_PARTY: return "Party";
-		case PACKET_REFRESH: return "Refresh";
-		case PACKET_NPC: return "NPC";
-		case PACKET_PLAYER_AUTOREFRESH: return "Player_AutoRefresh";
-		case PACKET_NPC_AUTOREFRESH: return "NPC_AutoRefresh";
-		case PACKET_APPEAR: return "Appear";
-		case PACKET_PAPERDOLL: return "Paperdoll";
-		case PACKET_EFFECT: return "Effect";
-		case PACKET_TRADE: return "Trade";
-		case PACKET_CHEST: return "Chest";
-		case PACKET_DOOR: return "Door";
-		case PACKET_MESSAGE: return "Message";
-		case PACKET_BANK: return "Bank";
-		case PACKET_LOCKER: return "Locker";
-		case PACKET_BARBER: return "Barber";
-		case PACKET_GUILD: return "Guild";
-		case PACKET_MUSIC: return "Music";
-		case PACKET_SIT: return "Sit";
-		case PACKET_RECOVER: return "Recover";
-		case PACKET_BOARD: return "Board";
-		case PACKET_CAST: return "Cast";
-		case PACKET_ARENA: return "Arena";
-		case PACKET_PRIEST: return "Priest";
-		case PACKET_MARRIAGE: return "Marriage";
-		case PACKET_ADMININTERACT: return "AdminInteract";
-		case PACKET_CITIZEN: return "Citizen";
-		case PACKET_QUEST: return "Quest";
-		case PACKET_BOOK: return "Book";
-		case PACKET_F_INIT: return "Init";
+		case PacketFamily::Internal: return "Interal";
+		case PacketFamily::Connection: return "Connection";
+		case PacketFamily::Account: return "Account";
+		case PacketFamily::Character: return "Character";
+		case PacketFamily::Login: return "Login";
+		case PacketFamily::Welcome: return "Welcome";
+		case PacketFamily::Walk: return "Walk";
+		case PacketFamily::Face: return "Face";
+		case PacketFamily::Chair: return "Chair";
+		case PacketFamily::Emote: return "Emote";
+		case PacketFamily::Attack: return "Attack";
+		case PacketFamily::Spell: return "Spell";
+		case PacketFamily::Shop: return "Shop";
+		case PacketFamily::Item: return "Item";
+		case PacketFamily::StatSkill: return "StatSkill";
+		case PacketFamily::Global: return "Global";
+		case PacketFamily::Talk: return "Talk";
+		case PacketFamily::Warp: return "Warp";
+		case PacketFamily::Jukebox: return "Jukebox";
+		case PacketFamily::Players: return "Players";
+		case PacketFamily::Avatar: return "Avatar";
+		case PacketFamily::Party: return "Party";
+		case PacketFamily::Refresh: return "Refresh";
+		case PacketFamily::NPC: return "NPC";
+		case PacketFamily::PlayerAutoRefresh: return "Player_AutoRefresh";
+		case PacketFamily::NPCAutoRefresh: return "NPC_AutoRefresh";
+		case PacketFamily::Appear: return "Appear";
+		case PacketFamily::Paperdoll: return "Paperdoll";
+		case PacketFamily::Effect: return "Effect";
+		case PacketFamily::Trade: return "Trade";
+		case PacketFamily::Chest: return "Chest";
+		case PacketFamily::Door: return "Door";
+		case PacketFamily::Message: return "Message";
+		case PacketFamily::Bank: return "Bank";
+		case PacketFamily::Locker: return "Locker";
+		case PacketFamily::Barber: return "Barber";
+		case PacketFamily::Guild: return "Guild";
+		case PacketFamily::Music: return "Music";
+		case PacketFamily::Sit: return "Sit";
+		case PacketFamily::Recover: return "Recover";
+		case PacketFamily::Board: return "Board";
+		case PacketFamily::Cast: return "Cast";
+		case PacketFamily::Arena: return "Arena";
+		case PacketFamily::Priest: return "Priest";
+		case PacketFamily::Marriage: return "Marriage";
+		case PacketFamily::AdminInteract: return "AdminInteract";
+		case PacketFamily::Citizen: return "Citizen";
+		case PacketFamily::Quest: return "Quest";
+		case PacketFamily::Book: return "Book";
+		case PacketFamily::Init: return "Init";
 		default: return "UNKNOWN";
 	}
 }
@@ -91,51 +91,51 @@ std::string PacketProcessor::GetActionName(PacketAction action)
 {
 	switch (action)
 	{
-		case PACKET_REQUEST: return "Request";
-		case PACKET_ACCEPT: return "Accept";
-		case PACKET_REPLY: return "Reply";
-		case PACKET_REMOVE: return "Remove";
-		case PACKET_AGREE: return "Agree";
-		case PACKET_CREATE: return "Create";
-		case PACKET_ADD: return "Add";
-		case PACKET_PLAYER: return "Player";
-		case PACKET_TAKE: return "Take";
-		case PACKET_USE: return "Use";
-		case PACKET_BUY: return "Buy";
-		case PACKET_SELL: return "Sell";
-		case PACKET_OPEN: return "Open";
-		case PACKET_CLOSE: return "Close";
-		case PACKET_MSG: return "Msg";
-		case PACKET_SPEC: return "Spec";
-		case PACKET_ADMIN: return "Admin";
-		case PACKET_LIST: return "List";
-		case PACKET_TELL: return "Tell";
-		case PACKET_REPORT: return "Report";
-		case PACKET_ANNOUNCE: return "Announce";
-		case PACKET_SERVER: return "Server";
-		case PACKET_DROP: return "Drop";
-		case PACKET_JUNK: return "Junk";
-		case PACKET_OBTAIN: return "Obtain";
-		case PACKET_GET: return "Get";
-		case PACKET_KICK: return "Kick";
-		case PACKET_RANK: return "Rank";
-		case PACKET_TARGET_SELF: return "TargetSelf";
-		case PACKET_TARGET_OTHER: return "TargetOther";
-		case PACKET_TARGET_GROUP: return "TargetGroup";
-		case PACKET_DIALOG: return "Dialog";
-		case PACKET_INTERNAL_NULL: return "INTERNAL_NULL";
-		case PACKET_INTERNAL_WARP: return "INTERNAL_WARP";
-		case PACKET_PING: return "Ping";
-		case PACKET_PONG: return "Pong";
-		case PACKET_NET3: return "Net3";
-		case PACKET_A_INIT: return "Init";
+		case PacketAction::Request: return "Request";
+		case PacketAction::Accept: return "Accept";
+		case PacketAction::Reply: return "Reply";
+		case PacketAction::Remove: return "Remove";
+		case PacketAction::Agree: return "Agree";
+		case PacketAction::Create: return "Create";
+		case PacketAction::Add: return "Add";
+		case PacketAction::Player: return "Player";
+		case PacketAction::Take: return "Take";
+		case PacketAction::Use: return "Use";
+		case PacketAction::Buy: return "Buy";
+		case PacketAction::Sell: return "Sell";
+		case PacketAction::Open: return "Open";
+		case PacketAction::Close: return "Close";
+		case PacketAction::Msg: return "Msg";
+		case PacketAction::Spec: return "Spec";
+		case PacketAction::Admin: return "Admin";
+		case PacketAction::List: return "List";
+		case PacketAction::Tell: return "Tell";
+		case PacketAction::Report: return "Report";
+		case PacketAction::Announce: return "Announce";
+		case PacketAction::Server: return "Server";
+		case PacketAction::Drop: return "Drop";
+		case PacketAction::Junk: return "Junk";
+		case PacketAction::Obtain: return "Obtain";
+		case PacketAction::Get: return "Get";
+		case PacketAction::Kick: return "Kick";
+		case PacketAction::Rank: return "Rank";
+		case PacketAction::TargetSelf: return "TargetSelf";
+		case PacketAction::TargetOther: return "TargetOther";
+		case PacketAction::TargetGroup: return "TargetGroup";
+		case PacketAction::Dialog: return "Dialog";
+		case PacketAction::InternalNull: return "INTERNAL_NULL";
+		case PacketAction::InternalWarp: return "INTERNAL_WARP";
+		case PacketAction::Ping: return "Ping";
+		case PacketAction::Pong: return "Pong";
+		case PacketAction::Net3: return "Net3";
+		case PacketAction::Init: return "Init";
 		default: return "UNKNOWN";
 	}
 }
 
 std::string PacketProcessor::Decode(const std::string &str)
 {
-	if (emulti_d == 0 || ((unsigned char)str[0] == PACKET_A_INIT && (unsigned char)str[1] == PACKET_F_INIT))
+	if (emulti_d == 0 || ((unsigned char)str[0] == (unsigned char)PacketAction::Init && (unsigned char)str[1] == (unsigned char)PacketFamily::Init))
 		return str;
 
 	std::string newstr;
@@ -181,7 +181,7 @@ std::string PacketProcessor::Decode(const std::string &str)
 
 std::string PacketProcessor::Encode(const std::string &rawstr)
 {
-	if (emulti_e == 0 || ((unsigned char)rawstr[2] == PACKET_A_INIT && (unsigned char)rawstr[3] == PACKET_F_INIT))
+	if (emulti_e == 0 || ((unsigned char)rawstr[2] == (unsigned char)PacketAction::Init && (unsigned char)rawstr[3] == (unsigned char)PacketFamily::Init))
 		return rawstr;
 
 	std::string str = this->DickWinderE(rawstr);
@@ -359,7 +359,7 @@ std::array<unsigned char, 4> PacketProcessor::ENumber(unsigned int number, std::
 
 unsigned short PacketProcessor::PID(PacketFamily family, PacketAction action)
 {
-	return family | (action << 8);
+	return (unsigned char)family | ((unsigned char)action << 8);
 }
 
 std::array<unsigned char, 2> PacketProcessor::EPID(unsigned short pid)
@@ -482,7 +482,7 @@ unsigned short PacketBuilder::SetID(unsigned short id)
 {
 	if (id == 0)
 	{
-		id = PacketProcessor::PID(PACKET_F_INIT, PACKET_A_INIT);
+		id = PacketProcessor::PID(PacketFamily::Init, PacketAction::Init);
 	}
 
 	this->id = id;

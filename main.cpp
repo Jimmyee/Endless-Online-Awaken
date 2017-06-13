@@ -36,7 +36,14 @@ int main()
     {
         if(s.eoclient.get())
         {
+            bool was_connected = s.eoclient->Connected();
+
             s.eoclient->Tick();
+
+            if(was_connected && !s.eoclient->Connected())
+            {
+                s.gui->Disconnected();
+            }
         }
 
         sf::Event event;

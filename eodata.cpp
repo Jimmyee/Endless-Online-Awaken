@@ -121,7 +121,7 @@ bool EMF::Load()
 
 			this->GetTile(xloc, yloc).tilespec = static_cast<EMF_Tile::TileSpec>(spec);
 
-			if (spec == EMF_Tile::Spikes1)
+			if (spec == (unsigned char)EMF_Tile::TileSpec::Spikes1)
 			{
 				this->has_timed_spikes = true;
 			}
@@ -248,7 +248,7 @@ const EMF_Tile& EMF::GetTile(unsigned char x, unsigned char y) const
 EMF_Tile::TileSpec EMF::GetSpec(unsigned char x, unsigned char y) const
 {
 	if (!InBounds(x, y))
-		return EMF_Tile::None;
+		return EMF_Tile::TileSpec::None;
 
 	return this->GetTile(x, y).tilespec;
 }
@@ -353,7 +353,7 @@ void EIF::Read(const std::string& filename)
 		// Ranged gun hack
 		if (newdata.id == 365 && newdata.name == "Gun")
 		{
-			newdata.subtype = EIF_Data::Ranged;
+			newdata.subtype = EIF_Data::SubType::Ranged;
 		}
 		// / Ranged gun hack
 		newdata.special = static_cast<EIF_Data::Special>(PacketProcessor::Number(buf[4]));
@@ -433,7 +433,7 @@ unsigned int EIF::GetKey(int keynum) const
 {
 	for (std::size_t i = 0; i < this->data.size(); ++i)
 	{
-		if (this->Get(i).type == EIF_Data::Key && this->Get(i).key == keynum)
+		if (this->Get(i).type == EIF_Data::Type::Key && this->Get(i).key == keynum)
 			return i;
 	}
 

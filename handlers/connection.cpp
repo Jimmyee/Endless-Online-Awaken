@@ -4,13 +4,15 @@
 
 void Connection_Player(PacketReader reader)
 {
-    shared_ptr<EOClient> eoclient = S::GetInstance().eoclient;
+    S &s = S::GetInstance();
 
     unsigned short s1 = reader.GetShort();
     unsigned char s2 = reader.GetChar();
 
-    eoclient->UpdateSequenceByte(s1, s2);
+    printf("Connection_Player: s1: %i, s2: %i\n", s1, s2);
 
-    PacketBuilder reply(PacketFamily::PACKET_CONNECTION, PacketAction::PACKET_PING);
-    eoclient->Send(reply);
+    s.eoclient->UpdateSequenceByte(s1, s2);
+
+    PacketBuilder reply(PacketFamily::Connection, PacketAction::Ping);
+    s.eoclient->Send(reply);
 }

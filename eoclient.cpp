@@ -7,7 +7,7 @@ EOClient::EOClient(bool initialize)
 {
     this->Reset();
 
-	this->RegisterHandler(PacketFamily::PACKET_F_INIT, PacketAction::PACKET_A_INIT, INIT_INIT);
+	this->RegisterHandler(PacketFamily::Init, PacketAction::Init, INIT_INIT);
 
 	if(initialize)
     {
@@ -59,10 +59,19 @@ void EOClient::Send(PacketBuilder packet)
         PacketBuilder send_packet;
 
         send_packet.SetID(packet.GetID());
-        if(this->state != ClientState::Uninitialized)
+        if(this->state != State::Uninitialized)
         {
-            unsigned short seqnum = static_cast<unsigned short>(this->GenSequenceByte());
-            send_packet.AddShort(seqnum);
+            int seq_byte = this->GenSequenceByte();
+            if(seq_byte >= 253)
+            {
+                unsigned short seq_byte_short = seq_byte;
+                printf("Seq byte: %i\n", seq_byte_short);
+                send_packet.AddShort(seq_byte);
+            }
+            else
+            {
+                send_packet.AddChar(seq_byte);
+            }
         }
         send_packet.AddString(packet.Get().substr(4));
         std::string enc = this->processor.Encode(send_packet.Get());
@@ -148,42 +157,43 @@ void EOClient::Tick()
         delete databuff;
 
         std::size_t datasize = 1;
-        if(this->packet_state == EOClient::ReadData)
+        if(this->packet_state == EOClient::PacketState::ReadData)
         {
             datasize = this->length;
         }
 
         data = this->recv_buffer.substr(0, datasize);
+        std::fill(this->recv_buffer.begin(), this->recv_buffer.begin() + datasize, '\0');
         this->recv_buffer.erase(0, datasize);
 
         while (data.length() > 0 && !done)
         {
             switch (this->packet_state)
             {
-                case EOClient::ReadLen1:
+                case EOClient::PacketState::ReadLen1:
                     this->raw_length[0] = data[0];
                     data[0] = '\0';
                     data.erase(0, 1);
-                    this->packet_state = EOClient::ReadLen2;
+                    this->packet_state = EOClient::PacketState::ReadLen2;
 
                     if (data.length() == 0)
                     {
                         break;
                     }
 
-                case EOClient::ReadLen2:
+                case EOClient::PacketState::ReadLen2:
                     this->raw_length[1] = data[0];
                     data[0] = '\0';
                     data.erase(0, 1);
                     this->length = PacketProcessor::Number(this->raw_length[0], this->raw_length[1]);
-                    this->packet_state = EOClient::ReadData;
+                    this->packet_state = EOClient::PacketState::ReadData;
 
                     if (data.length() == 0)
                     {
                         break;
                     }
 
-                case EOClient::ReadData:
+                case EOClient::PacketState::ReadData:
                     oldlength = this->data.length();
                     this->data += data.substr(0, this->length);
                     std::fill(data.begin(), data.begin() + std::min<std::size_t>(data.length(), this->length), '\0');
@@ -201,7 +211,7 @@ void EOClient::Tick()
 
                         std::fill((std::begin((this->data))), (std::end((this->data))), '\0');
                         this->data.erase();
-                        this->packet_state = EOClient::ReadLen1;
+                        this->packet_state = EOClient::PacketState::ReadLen1;
 
                         done = true;
                     }
@@ -231,54 +241,63 @@ void EOClient::Tick()
                 this->send_buffer.erase(sent);
             }
         }
-
-        if(!this->connected)
-        {
-            S::GetInstance().gui->Disconnected();
-        }
     }
 }
 
 void EOClient::Reset()
 {
     this->connected = false;
-    this->packet_state = EOClient::ReadLen1;
+    std::fill((std::begin((this->send_buffer))), (std::end((this->send_buffer))), '\0');
+    this->send_buffer.erase();
+    std::fill((std::begin((this->recv_buffer))), (std::end((this->recv_buffer))), '\0');
+    this->recv_buffer.erase();
+    this->packet_state = EOClient::PacketState::ReadLen1;
     std::fill((std::begin((this->data))), (std::end((this->data))), '\0');
     this->data.erase();
     this->length = 0;
 	this->seq_start = 0;
 	this->seq = 0;
 	this->session_id = 0;
-	this->state = EOClient::Uninitialized;
+	this->state = EOClient::State::Uninitialized;
 }
 
 void EOClient::InitSequenceByte(unsigned char s1, unsigned char s2)
 {
-    this->seq_start = s2 + s1 * 7 - 13;
+	this->seq_start = std::uint32_t(s2 + s1 * 7);
+	this->seq_start -= 13;
 }
 
 void EOClient::UpdateSequenceByte(unsigned short s1, unsigned char s2)
 {
-    int s1int = static_cast<int>(s1);
-    int s2int = static_cast<int>(s2);
-    this->seq_start = s1int - s2int;
+    this->seq_start = std::uint32_t(s1 - s2);
+
+    printf("s1: %i, s2: %i, seq_start: %i, seq: %i\n", s1, s2, this->seq_start, this->seq);
 }
 
 int EOClient::GenSequenceByte()
 {
     if(++this->seq >= 10) seq = 0;
 
-    return this->seq_start + this->seq;
+    int ret = std::uint32_t(this->seq_start + this->seq);
+
+    printf("seq_start: %i, seq: %i\n", this->seq_start, this->seq);
+
+    return ret;
 }
 
-EOClient::ClientState &EOClient::GetState()
+void EOClient::SetState(State state)
+{
+    this->state = state;
+}
+
+EOClient::State EOClient::GetState()
 {
     return this->state;
 }
 
 void EOClient::RequestInit()
 {
-    PacketBuilder builder(PacketFamily::PACKET_F_INIT, PacketAction::PACKET_A_INIT);
+    PacketBuilder builder(PacketFamily::Init, PacketAction::Init);
     unsigned int challenge = 72000;
     builder.AddThree(challenge);
     builder.AddChar(2); // ?
@@ -293,21 +312,69 @@ void EOClient::RequestInit()
 
 void EOClient::Initialize(PacketReader reader)
 {
-    unsigned char s1 = reader.GetByte();
-    unsigned char s2 = reader.GetByte();
-    unsigned char emulti_d = reader.GetByte();
-    unsigned char emulti_e = reader.GetByte();
-    unsigned short id = reader.GetByte();
+    int s1 = reader.GetByte();
+    int s2 = reader.GetByte();
+    int emulti_d = reader.GetByte();
+    int emulti_e = reader.GetByte();
+    int id = reader.GetShort();
     reader.GetThree(); // hash response
 
-    this->processor.SetEMulti(emulti_d, emulti_e);
-    this->RegisterHandler(PacketFamily::PACKET_CONNECTION, PacketAction::PACKET_PLAYER, Connection_Player);
+    this->processor.SetEMulti(emulti_e, emulti_d);
 
     this->InitSequenceByte(s1, s2);
     this->session_id = id;
 
-    this->state = EOClient::ClientState::Initialized;
+    this->state = EOClient::State::Initialized;
+}
 
-    PacketBuilder packet(PacketFamily::PACKET_CONNECTION, PacketAction::PACKET_ACCEPT);
+void EOClient::LoginRequest(std::string username, std::string password)
+{
+    PacketBuilder packet(PacketFamily::Login, PacketAction::Request);
+    packet.AddBreakString(username);
+    packet.AddBreakString(password);
     this->Send(packet);
+}
+
+void EOClient::AccountRequest(std::string username)
+{
+    PacketBuilder packet(PacketFamily::Account, PacketAction::Request);
+    packet.AddString(username);
+    this->Send(packet);
+}
+
+void EOClient::AccountCreate(std::string username, std::string password, std::string real_name, std::string location, std::string email)
+{
+    std::string computer = "Endless Online Awaken";
+
+	PacketBuilder packet(PacketFamily::Account, PacketAction::Create);
+	packet.AddShort(this->session_id);
+	packet.AddByte(1); // ?
+	packet.AddBreakString(username);
+	packet.AddBreakString(password);
+	packet.AddBreakString(real_name);
+	packet.AddBreakString(location);
+	packet.AddBreakString(email);
+	packet.AddBreakString(computer);
+	packet.AddBreakString("56781234567"); // HDD ID
+	this->Send(packet);
+}
+
+void EOClient::RequestSelectCharacter(unsigned int id)
+{
+    PacketBuilder packet(PacketFamily::Welcome, PacketAction::Request);
+    packet.AddInt(id);
+    this->Send(packet);
+}
+
+shared_ptr<Character> EOClient::GetAccountCharacter(std::size_t index)
+{
+    for(std::size_t i = 0; i < this->account_characters.size(); ++i)
+    {
+        if(i == index)
+        {
+            return this->account_characters[i];
+        }
+    }
+
+    return shared_ptr<Character>(0);
 }

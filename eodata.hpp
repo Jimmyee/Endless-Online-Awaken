@@ -38,7 +38,7 @@ struct EMF_Warp
 	unsigned char y;
 	unsigned char levelreq;
 
-	enum WarpSpec
+	enum class WarpSpec
 	{
 		NoDoor,
 		Door,
@@ -50,7 +50,7 @@ struct EMF_Warp
 	WarpSpec spec;
 	bool open;
 
-	EMF_Warp() : map(0), x(0), y(0), levelreq(0), spec(EMF_Warp::NoDoor), open(false) {}
+	EMF_Warp() : map(0), x(0), y(0), levelreq(0), spec(EMF_Warp::WarpSpec::NoDoor), open(false) {}
 
 	explicit operator bool() const
 	{
@@ -63,7 +63,7 @@ struct EMF_Warp
  */
 struct EMF_Tile
 {
-	enum TileSpec
+	enum class TileSpec
 	{
 		None = -1,
 		Wall,
@@ -109,7 +109,7 @@ struct EMF_Tile
 
 	EMF_Warp warp;
 
-	EMF_Tile() : tilespec(EMF_Tile::None) { }
+	EMF_Tile() : tilespec(EMF_Tile::TileSpec::None) { }
 
 	bool Walkable(bool npc = false) const
 	{
@@ -120,28 +120,28 @@ struct EMF_Tile
 
 		switch (this->tilespec)
 		{
-			case Wall:
-			case ChairDown:
-			case ChairLeft:
-			case ChairRight:
-			case ChairUp:
-			case ChairDownRight:
-			case ChairUpLeft:
-			case ChairAll:
-			case Chest:
-			case BankVault:
-			case MapEdge:
-			case Board1:
-			case Board2:
-			case Board3:
-			case Board4:
-			case Board5:
-			case Board6:
-			case Board7:
-			case Board8:
-			case Jukebox:
+			case TileSpec::Wall:
+			case TileSpec::ChairDown:
+			case TileSpec::ChairLeft:
+			case TileSpec::ChairRight:
+			case TileSpec::ChairUp:
+			case TileSpec::ChairDownRight:
+			case TileSpec::ChairUpLeft:
+			case TileSpec::ChairAll:
+			case TileSpec::Chest:
+			case TileSpec::BankVault:
+			case TileSpec::MapEdge:
+			case TileSpec::Board1:
+			case TileSpec::Board2:
+			case TileSpec::Board3:
+			case TileSpec::Board4:
+			case TileSpec::Board5:
+			case TileSpec::Board6:
+			case TileSpec::Board7:
+			case TileSpec::Board8:
+			case TileSpec::Jukebox:
 				return false;
-			case NPCBoundary:
+			case TileSpec::NPCBoundary:
 				return !npc;
 			default:
 				return true;
@@ -159,7 +159,7 @@ class EMF
 		void Unload();
 
 	public:
-		enum EffectType
+		enum class EffectType
 		{
 			EffectNone = 0,
 			EffectHPDrain = 1,
@@ -207,7 +207,7 @@ class EMF
  */
 struct EIF_Data
 {
-    enum Type
+    enum class Type
     {
         Static,
         UnknownType1,
@@ -237,7 +237,7 @@ struct EIF_Data
         CureCurse
     };
 
-    enum SubType
+    enum class SubType
     {
         None,
         Ranged,
@@ -246,7 +246,7 @@ struct EIF_Data
         TwoHanded
     };
 
-    enum Special
+    enum class Special
     {
         Normal,
         Rare, // ?
@@ -256,7 +256,7 @@ struct EIF_Data
         Cursed
     };
 
-    enum Size
+    enum class Size
     {
         Size1x1,
         Size1x2,
@@ -332,11 +332,11 @@ struct EIF_Data
 
 	Size size;
 
-	EIF_Data() : id(0), graphic(0), type(Static), subtype(None), special(Lore),
+	EIF_Data() : id(0), graphic(0), type(Type::Static), subtype(SubType::None), special(Special::Lore),
 	hp(0), tp(0), mindam(0), maxdam(0), accuracy(0), evade(0), armor(0), str(0), intl(0), wis(0),
 	agi(0), con(0), cha(0), light(0), dark(0), earth(0), air(0), water(0), fire(0), scrollmap(0),
 	gender(0), scrolly(0), levelreq(0), classreq(0), strreq(0), intreq(0), wisreq(0), agireq(0),
-	conreq(0), chareq(0), weight(0), size(Size1x1) { }
+	conreq(0), chareq(0), weight(0), size(Size::Size1x1) { }
 
 	explicit operator bool() const
 	{
@@ -354,14 +354,14 @@ class EIF
 		{
 			switch (size)
 			{
-				case EIF_Data::Size1x1: return 1;
-				case EIF_Data::Size1x2: return 2;
-				case EIF_Data::Size1x3: return 3;
-				case EIF_Data::Size1x4: return 4;
-				case EIF_Data::Size2x1: return 2;
-				case EIF_Data::Size2x2: return 4;
-				case EIF_Data::Size2x3: return 6;
-				case EIF_Data::Size2x4: return 8;
+				case EIF_Data::Size::Size1x1: return 1;
+				case EIF_Data::Size::Size1x2: return 2;
+				case EIF_Data::Size::Size1x3: return 3;
+				case EIF_Data::Size::Size1x4: return 4;
+				case EIF_Data::Size::Size2x1: return 2;
+				case EIF_Data::Size::Size2x2: return 4;
+				case EIF_Data::Size::Size2x3: return 6;
+				case EIF_Data::Size::Size2x4: return 8;
 				default:      return 0;
 			}
 		}
@@ -386,7 +386,7 @@ class EIF
  */
 struct ENF_Data
 {
-    enum Type
+    enum class Type
     {
         NPC,
         Passive,
@@ -425,7 +425,7 @@ struct ENF_Data
 	short evade;
 	short armor;
 
-	ENF_Data() : id(0), graphic(0), boss(0), child(0), type(NPC), vendor_id(0),
+	ENF_Data() : id(0), graphic(0), boss(0), child(0), type(Type::NPC), vendor_id(0),
 	hp(0), exp(0), mindam(0), maxdam(0), accuracy(0), evade(0), armor(0) { }
 
 	explicit operator bool() const
@@ -458,21 +458,21 @@ class ENF
  */
 struct ESF_Data
 {
-    enum Type
+    enum class Type
     {
         Heal,
         Damage,
         Bard
     };
 
-    enum TargetRestrict
+    enum class TargetRestrict
     {
         NPCOnly,
         Friendly,
         Opponent
     };
 
-    enum Target
+    enum class Target
     {
         Normal,
         Self,
@@ -501,8 +501,8 @@ struct ESF_Data
 	short accuracy;
 	short hp;
 
-	ESF_Data() : id(0), icon(0), graphic(0), tp(0), sp(0), cast_time(0), type(Damage),
-	target_restrict(NPCOnly), target(Normal), mindam(0), maxdam(0), accuracy(0), hp(0) { }
+	ESF_Data() : id(0), icon(0), graphic(0), tp(0), sp(0), cast_time(0), type(Type::Damage),
+	target_restrict(TargetRestrict::NPCOnly), target(Target::Normal), mindam(0), maxdam(0), accuracy(0), hp(0) { }
 
 	explicit operator bool() const
 	{

@@ -1,25 +1,25 @@
 #ifndef FWD_INIT_HPP_INCLUDED
 #define FWD_INIT_HPP_INCLUDED
 
-enum InitReply : unsigned char
+enum class InitReply : unsigned char
 {
-	INIT_OUT_OF_DATE = 1,
-	INIT_OK = 2,
-	INIT_BANNED = 3,
-	INIT_FILE_MAP = 4,
-	INIT_FILE_EIF = 5,
-	INIT_FILE_ENF = 6,
-	INIT_FILE_ESF = 7,
-	INIT_PLAYERS = 8,
-	INIT_MAP_MUTATION = 9,
-	INIT_FRIEND_LIST_PLAYERS = 10,
-	INIT_FILE_ECF = 11
+	OutOfDate = 1,
+	OK = 2,
+	Banned = 3,
+	Map = 4,
+	EIF = 5,
+	ENF = 6,
+	ESF = 7,
+	Players = 8,
+	MapMutation = 9,
+	FriendListPlayers = 10,
+	ECF = 11
 };
 
-enum InitBanType : unsigned char
+enum class InitBanType : unsigned char
 {
-	INIT_BAN_TEMP = 0,
-	INIT_BAN_PERM = 2
+	BanTemporary = 0,
+	BanPermanent = 2
 };
 
 #endif // FWD_INIT_HPP_INCLUDED

@@ -1,10 +1,10 @@
 #ifndef MAP_HPP_INCLUDED
 #define MAP_HPP_INCLUDED
 
+#include "eodata.hpp"
+
 #include <SFML/Graphics.hpp>
 #include <memory>
-
-#include "eodata.hpp"
 
 // class responsible for rendering the map
 class Map

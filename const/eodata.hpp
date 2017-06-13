@@ -1,18 +1,18 @@
 #ifndef FWD_EODATA_HPP_INCLUDED
 #define FWD_EODATA_HPP_INCLUDED
 
-enum MapEffect : unsigned char
+enum class MapEffect : unsigned char
 {
-	MAP_EFFECT_QUAKE = 1
+	Quake = 1
 };
 
-enum FileType : unsigned char
+enum class FileType : unsigned char
 {
-	FILE_MAP = 1,
-	FILE_ITEM = 2,
-	FILE_NPC = 3,
-	FILE_SPELL = 4,
-	FILE_CLASS = 5
+	Map = 1,
+	Item = 2,
+	NPC = 3,
+	Spell = 4,
+	Class = 5
 };
 
 #endif // FWD_EODATA_HPP_INCLUDED

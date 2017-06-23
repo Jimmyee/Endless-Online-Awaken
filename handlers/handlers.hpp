@@ -1,3 +1,5 @@
+// Endless Online Awaken v0.0.1
+
 #ifndef HANDLERS_HPP_INCLUDED
 #define HANDLERS_HPP_INCLUDED
 
@@ -8,5 +10,15 @@ void Connection_Player(PacketReader reader);
 void Login_Reply(PacketReader reader);
 void Account_Reply(PacketReader reader);
 void Welcome_Reply(PacketReader reader);
+
+void Avatar_Remove(PacketReader reader); // Character disappears
+void Players_Agree(PacketReader reader); // Characters appears in range
+void Walk_Player(PacketReader reader);
+void Appear_Reply(PacketReader reader); // NPC appears in range
+
+void Talk_Player(PacketReader reader); // public message
+
+void Sit_Player(PacketReader reader);
+void Sit_Remove(PacketReader reader);
 
 #endif // HANDLERS_HPP_INCLUDED

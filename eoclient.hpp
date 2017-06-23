@@ -1,3 +1,5 @@
+// Endless Online Awaken v0.0.1
+
 #ifndef EOCLIENT_HPP_INCLUDED
 #define EOCLIENT_HPP_INCLUDED
 
@@ -31,7 +33,7 @@ public:
     };
 
 private:
-    sf::TcpSocket socket;
+    shared_ptr<sf::TcpSocket> socket;
     bool connected;
 
     std::string send_buffer;
@@ -77,7 +79,8 @@ public:
     void LoginRequest(std::string username, std::string password);
     void AccountRequest(std::string username);
     void AccountCreate(std::string username, std::string password, std::string real_name, std::string location, std::string email);
-    void RequestSelectCharacter(unsigned int id);
+    void SelectCharacter(unsigned int id);
+    void Talk(std::string message);
 
     shared_ptr<Character> GetAccountCharacter(std::size_t index);
 };

@@ -1,6 +1,9 @@
+// Endless Online Awaken v0.0.1
+
 #ifndef SINGLETON_HPP_INCLUDED
 #define SINGLETON_HPP_INCLUDED
 
+#include "randgen.hpp"
 #include "config.hpp"
 #include "eoclient.hpp"
 #include "eodata.hpp"
@@ -28,6 +31,8 @@ public:
 
     bool call_exit;
 
+    RandomGenerator rand_gen;
+
     shared_ptr<Config> config;
     shared_ptr<EOClient> eoclient;
 
@@ -41,6 +46,7 @@ public:
 
     shared_ptr<GUI> gui;
     shared_ptr<Map> map;
+    shared_ptr<Character> character;
 };
 
 #endif // SINGLETON_HPP_INCLUDED

@@ -1,5 +1,7 @@
-#ifndef ACCOUNT_HPP_INCLUDED
-#define ACCOUNT_HPP_INCLUDED
+// Endless Online Awaken v0.0.1
+
+#ifndef CONST_ACCOUNT_HPP_INCLUDED
+#define CONST_ACCOUNT_HPP_INCLUDED
 
 enum class AccountReply : short
 {
@@ -20,4 +22,4 @@ enum class LoginReply : short
 	Busy = 6
 };
 
-#endif // ACCOUNT_HPP_INCLUDED
+#endif // CONST_ACCOUNT_HPP_INCLUDED

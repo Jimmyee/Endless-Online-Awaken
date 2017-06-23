@@ -1,3 +1,5 @@
+// Endless Online Awaken v0.0.1
+
 #ifndef CONFIG_HPP_INCLUDED
 #define CONFIG_HPP_INCLUDED
 

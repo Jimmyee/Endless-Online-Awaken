@@ -1,3 +1,5 @@
+// Endless Online Awaken v0.0.1
+
 #include "eoclient.hpp"
 #include "singleton.hpp"
 
@@ -26,7 +28,7 @@ bool EOClient::Connect()
     unsigned short port = std::atoi(config->values["Port"].c_str());
 
     printf("Socket: Connecting to %s:%i\n", address.c_str(), port);
-    sf::Socket::Status status = this->socket.connect(address, port);
+    sf::Socket::Status status = this->socket->connect(address, port);
 
     if(status != sf::Socket::Done)
     {
@@ -34,7 +36,7 @@ bool EOClient::Connect()
         return false;
     }
 
-    this->socket.setBlocking(false);
+    this->socket->setBlocking(false);
     this->connected = true;
     puts("Socket: Connected");
 
@@ -43,7 +45,7 @@ bool EOClient::Connect()
 
 void EOClient::Disconnect()
 {
-    this->socket.disconnect();
+    this->socket->disconnect();
     this->Reset();
 }
 
@@ -78,7 +80,7 @@ void EOClient::Send(PacketBuilder packet)
         const char *data = enc.c_str();
         std::size_t sent = 0;
 
-        sf::Socket::Status status = this->socket.send(data, enc.size(), sent);
+        sf::Socket::Status status = this->socket->send(data, enc.size(), sent);
         if(status == sf::Socket::Done)
         {
 
@@ -98,11 +100,16 @@ void EOClient::HandleData(std::string data)
 {
     PacketReader reader(this->processor.Decode(data));
     std::map<PacketFamily, std::map<PacketAction, handler_func>>::iterator it;
+    std::map<PacketAction, handler_func>::iterator it2;
 
     it = this->handlers.find(reader.Family());
     if(it != this->handlers.end())
     {
-        this->handlers[reader.Family()][reader.Action()](reader);
+        it2 = this->handlers[reader.Family()].find(reader.Action());
+        if(it2 != this->handlers[reader.Family()].end())
+        {
+            this->handlers[reader.Family()][reader.Action()](reader);
+        }
     }
 }
 
@@ -132,7 +139,7 @@ void EOClient::Tick()
         bool done = false;
         int oldlength;
 
-        sf::Socket::Status status = this->socket.receive(databuff, 1024, received);
+        sf::Socket::Status status = this->socket->receive(databuff, 1024, received);
 
         if(status == sf::Socket::Status::Done)
         {
@@ -220,8 +227,6 @@ void EOClient::Tick()
                 default:
                     // If the code ever gets here, something is broken, so we just reset the client's state.
                     // thanks Sausage
-                    std::fill((std::begin((data))), (std::end((data))), '\0');
-                    data.erase();
                     this->Reset();
             }
         }
@@ -231,13 +236,15 @@ void EOClient::Tick()
             const char *to_send = this->send_buffer.c_str();
             std::size_t sent = 0;
 
-            sf::Socket::Status status = this->socket.send(to_send, this->send_buffer.size(), sent);
+            sf::Socket::Status status = this->socket->send(to_send, this->send_buffer.size(), sent);
             if(status == sf::Socket::Done)
             {
-                this->send_buffer.clear();
+                std::fill((std::begin((data))), (std::end((data))), '\0');
+                this->send_buffer.erase();
             }
             else if(status == sf::Socket::Partial)
             {
+                std::fill(data.begin(), data.begin() + sent, '\0');
                 this->send_buffer.erase(sent);
             }
         }
@@ -246,6 +253,8 @@ void EOClient::Tick()
 
 void EOClient::Reset()
 {
+    this->socket.reset();
+    this->socket = shared_ptr<sf::TcpSocket>(new sf::TcpSocket());
     this->connected = false;
     std::fill((std::begin((this->send_buffer))), (std::end((this->send_buffer))), '\0');
     this->send_buffer.erase();
@@ -259,6 +268,7 @@ void EOClient::Reset()
 	this->seq = 0;
 	this->session_id = 0;
 	this->state = EOClient::State::Uninitialized;
+	this->account_characters.clear();
 }
 
 void EOClient::InitSequenceByte(unsigned char s1, unsigned char s2)
@@ -359,7 +369,7 @@ void EOClient::AccountCreate(std::string username, std::string password, std::st
 	this->Send(packet);
 }
 
-void EOClient::RequestSelectCharacter(unsigned int id)
+void EOClient::SelectCharacter(unsigned int id)
 {
     PacketBuilder packet(PacketFamily::Welcome, PacketAction::Request);
     packet.AddInt(id);
@@ -377,4 +387,11 @@ shared_ptr<Character> EOClient::GetAccountCharacter(std::size_t index)
     }
 
     return shared_ptr<Character>(0);
+}
+
+void EOClient::Talk(std::string message)
+{
+    PacketBuilder packet(PacketFamily::Talk, PacketAction::Report);
+    packet.AddString(message);
+    this->Send(packet);
 }

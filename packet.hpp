@@ -1,3 +1,4 @@
+// Endless Online Awaken v0.0.1
 
 /* code taken from EOServ and edited by Jimmyee */
 
@@ -78,7 +79,7 @@ enum PacketAction : unsigned char
 	Sell = 12,
 	Open = 13,
 	Close = 14,
-	Msg = 15,
+	Message = 15,
 	Spec = 16,
 	Admin = 17,
 	List = 18,
@@ -194,6 +195,7 @@ class PacketReader
 		std::string GetFixedString(std::size_t length);
 		std::string GetBreakString(unsigned char breakchar = 0xFF);
 		std::string GetEndString();
+		unsigned char PeekByte();
 
 		~PacketReader();
 };

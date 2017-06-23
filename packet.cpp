@@ -1,3 +1,4 @@
+// Endless Online Awaken v0.0.1
 
 /* code taken from EOServ and edited by Jimmyee */
 
@@ -105,7 +106,7 @@ std::string PacketProcessor::GetActionName(PacketAction action)
 		case PacketAction::Sell: return "Sell";
 		case PacketAction::Open: return "Open";
 		case PacketAction::Close: return "Close";
-		case PacketAction::Msg: return "Msg";
+		case PacketAction::Message: return "Message";
 		case PacketAction::Spec: return "Spec";
 		case PacketAction::Admin: return "Admin";
 		case PacketAction::List: return "List";
@@ -463,6 +464,12 @@ std::string PacketReader::GetBreakString(unsigned char breakchar)
 std::string PacketReader::GetEndString()
 {
 	return GetFixedString(this->Remaining());
+}
+
+unsigned char PacketReader::PeekByte()
+{
+    unsigned char ret = this->data[this->pos];
+    return ret;
 }
 
 PacketReader::~PacketReader()

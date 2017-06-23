@@ -1,3 +1,5 @@
+// Endless Online Awaken v0.0.1
+
 #include "config.hpp"
 
 #include <fstream>

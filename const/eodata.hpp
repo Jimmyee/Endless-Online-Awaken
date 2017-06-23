@@ -1,5 +1,7 @@
-#ifndef FWD_EODATA_HPP_INCLUDED
-#define FWD_EODATA_HPP_INCLUDED
+// Endless Online Awaken v0.0.1
+
+#ifndef CONST_EODATA_HPP_INCLUDED
+#define CONST_EODATA_HPP_INCLUDED
 
 enum class MapEffect : unsigned char
 {
@@ -15,4 +17,4 @@ enum class FileType : unsigned char
 	Class = 5
 };
 
-#endif // FWD_EODATA_HPP_INCLUDED
+#endif // CONST_EODATA_HPP_INCLUDED

@@ -1,3 +1,4 @@
+// Endless Online Awaken v0.0.1
 
 /* code taken from EOServ and edited by Jimmyee */
 

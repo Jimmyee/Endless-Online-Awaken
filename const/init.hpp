@@ -1,5 +1,7 @@
-#ifndef FWD_INIT_HPP_INCLUDED
-#define FWD_INIT_HPP_INCLUDED
+// Endless Online Awaken v0.0.1
+
+#ifndef CONST_INIT_HPP_INCLUDED
+#define CONST_INIT_HPP_INCLUDED
 
 enum class InitReply : unsigned char
 {
@@ -22,4 +24,4 @@ enum class InitBanType : unsigned char
 	BanPermanent = 2
 };
 
-#endif // FWD_INIT_HPP_INCLUDED
+#endif // CONST_INIT_HPP_INCLUDED

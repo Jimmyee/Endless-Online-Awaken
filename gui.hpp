@@ -1,12 +1,17 @@
+// Endless Online Awaken v0.0.1
+
 #ifndef GUI_HPP_INCLUDED
 #define GUI_HPP_INCLUDED
 
 #include <SFML/Graphics.hpp>
 #include <memory>
 #include <vector>
+#include <list>
 #include <string>
 
 using std::shared_ptr;
+
+
 
 class GUI
 {
@@ -25,23 +30,17 @@ public:
 
     struct CreateAccount
     {
-        char *username;
-        char *password;
-        char *real_name;
-        char *location;
-        char *email;
+        std::string username;
+        std::string password;
+        std::string real_name;
+        std::string location;
+        std::string email;
 
         sf::Clock creation_clock;
         bool approved;
         bool created;
 
-        CreateAccount(char *username, char *password, char *real_name, char *location, char *email);
-    };
-
-    struct CharacterEntry
-    {
-        std::string name;
-        unsigned int id;
+        CreateAccount();
     };
 
     struct PopupModal
@@ -50,8 +49,39 @@ public:
         std::string title;
         std::string message;
         int type;
+        bool open;
+        bool need_open;
 
         PopupModal(const char *str_id, std::string title, std::string message, int type);
+    };
+
+    struct TextField
+    {
+        std::string text;
+        std::size_t min_len;
+        std::size_t max_len;
+
+        TextField(std::string text, std::size_t min_len, std::size_t max_len);
+        std::string GetText();
+        bool ValidateLength();
+    };
+
+    struct ChatConsole
+    {
+        struct ChatMessage
+        {
+            std::string name;
+            std::string message;
+
+            ChatMessage(std::string name, std::string message);
+        };
+
+        std::vector<ChatMessage> buffer;
+        std::size_t last_buffer_size;
+
+        ChatConsole();
+        void AddMessage(ChatMessage message);
+        void Draw();
     };
 
 private:
@@ -59,13 +89,15 @@ private:
     sf::Clock clock;
     State state;
     shared_ptr<sf::Sprite> bg;
+    shared_ptr<sf::Sprite> bg_avatar;
     std::string version_address;
-    bool connection_closed;
     bool initialize_focus;
-    shared_ptr<PopupModal> popup_modal;
 
 public:
+    shared_ptr<PopupModal> popup_modal;
     shared_ptr<CreateAccount> create_account;
+    std::vector<TextField> text_fields;
+    ChatConsole chat_console;
 
     GUI(sf::RenderWindow &window_);
     void ProcessEvent(sf::Event &event);
@@ -78,11 +110,10 @@ public:
     State GetState();
     void Disconnected();
 
+    void DisplayPopupModal();
+
     void StartScreen();
     void AccountCreation();
-    std::vector<std::string> GetAccountInfo();
-    void ResetCreateAcc();
-    void DisplayPopupModal();
     void CharacterList();
     void GameWindow();
 };

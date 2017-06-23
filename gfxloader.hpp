@@ -1,3 +1,5 @@
+// Endless Online Awaken v0.0.1
+
 #ifndef GFXLOADER_HPP_INCLUDED
 #define GFXLOADER_HPP_INCLUDED
 

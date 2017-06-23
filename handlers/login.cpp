@@ -1,6 +1,7 @@
+// Endless Online Awaken v0.0.1
+
 #include "handlers.hpp"
 #include "../singleton.hpp"
-#include "../eoclient.hpp"
 #include "../const/account.hpp"
 #include "../character.hpp"
 
@@ -39,8 +40,6 @@ void Login_Reply(PacketReader reader)
             }
             reader.GetByte(); // break
 
-            char lower = character.name[0];
-            character.name[0] = toupper(lower);
             s.eoclient->account_characters.push_back(shared_ptr<Character>(new Character(character)));
         }
 
@@ -50,5 +49,27 @@ void Login_Reply(PacketReader reader)
     else
     {
         puts("Login failed");
+
+        std::string title = "Could not login";
+        std::string message = "";
+
+        if(reply == LoginReply::WrongUser)
+        {
+            message = "The given username is incorrect.";
+        }
+        else if(reply == LoginReply::WrongUserPass)
+        {
+            message = "The given password is incorrect.";
+        }
+        else if(reply == LoginReply::LoggedIn)
+        {
+            message = "This account is already logged in.";
+        }
+        else if(reply == LoginReply::Busy)
+        {
+            message = "Sorry, the game server is currently busy.";
+        }
+
+        s.gui->popup_modal = shared_ptr<GUI::PopupModal>(new GUI::PopupModal("msg_login", title, message, 0));
     }
 }

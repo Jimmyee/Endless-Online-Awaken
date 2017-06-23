@@ -1,3 +1,5 @@
+// Endless Online Awaken v0.0.1
+
 #include "handlers.hpp"
 #include "../packet.hpp"
 #include "../singleton.hpp"

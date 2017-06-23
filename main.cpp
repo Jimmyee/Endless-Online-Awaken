@@ -1,3 +1,5 @@
+// Endless Online Awaken v0.0.1
+
 #include <SFML/Graphics.hpp>
 #include <imgui-sfml.h>
 #include <imgui.h>
@@ -6,6 +8,8 @@
 #include <chrono>
 
 #include "singleton.hpp"
+
+// TODO: create an alternative for singleton
 
 void initialize_data_handlers()
 {
@@ -27,6 +31,7 @@ int main()
     initialize_data_handlers();
 
     sf::RenderWindow window(sf::VideoMode(640, 480), "Endless Online Awaken", sf::Style::Close);
+    window.setFramerateLimit(60);
 
     s.eoclient = shared_ptr<EOClient>(new EOClient());
     s.gfx_loader = shared_ptr<GFXLoader>(new GFXLoader());
@@ -60,6 +65,7 @@ int main()
         s.gui->Update();
         s.gui->Process();
 
+        //ImGui::SetNextWindowFocus();
         //ImGui::ShowTestWindow();
 
         if(s.call_exit)

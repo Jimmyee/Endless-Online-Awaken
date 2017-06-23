@@ -1,3 +1,5 @@
+// Endless Online Awaken v0.0.1
+
 #ifndef ACCOUNT_HPP_INCLUDED
 #define ACCOUNT_HPP_INCLUDED
 

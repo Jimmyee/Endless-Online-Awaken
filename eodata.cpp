@@ -21,6 +21,26 @@ static void eodata_safe_fail(int line)
 #define SAFE_SEEK(fh, offset, from) if (std::fseek(fh, offset, from) != 0) { std::fclose(fh); eodata_safe_fail(__LINE__); }
 #define SAFE_READ(buf, size, count, fh) if (std::fread(buf, size, count, fh) != static_cast<std::size_t>(count)) { std::fclose(fh); eodata_safe_fail(__LINE__); }
 
+void decode_str(char* data, size_t n)
+{
+	for (size_t i = 0; i < n / 2; ++i)
+		std::swap(data[i], data[n - i - 1]);
+
+	bool flippy = n % 2 == 1;
+
+	for (size_t i = 0; i < n; ++i)
+	{
+		unsigned char c = data[i];
+
+		unsigned char f = 0x2E * flippy * ((c >= 0x50) ? -1 : 1);
+
+		if (c >= 0x22 && c <= 0x7E)
+			data[i] = 0x9F - c - f;
+
+		flippy = !flippy;
+	}
+}
+
 EMF::EMF(int id)
 {
 	this->id = id;
@@ -73,6 +93,9 @@ bool EMF::Load()
 	this->height = PacketProcessor::Number(buf[1]) + 1;
 
 	this->tiles.resize(this->height * this->width);
+
+	SAFE_READ(buf, sizeof(char), 2, fh);
+	this->fill_tile = PacketProcessor::Number(buf[0], buf[1]);
 
 	SAFE_SEEK(fh, 0x2A, SEEK_SET);
 	SAFE_READ(buf, sizeof(char), 3, fh);
@@ -167,18 +190,50 @@ bool EMF::Load()
 		}
 	}
 
+	// read graphic IDs
+	for(int i = 0; i < 9; ++i)
+	{
+	    SAFE_READ(buf, sizeof(char), 1, fh);
+        outersize = PacketProcessor::Number(buf[0]);
+        for (int xc = 0; xc < outersize; ++xc)
+        {
+            SAFE_READ(buf, sizeof(char), 2, fh);
+            unsigned char yloc = PacketProcessor::Number(buf[0]);
+            innersize = PacketProcessor::Number(buf[1]);
+            for (int yc = 0; yc < innersize; ++yc)
+            {
+                SAFE_READ(buf, sizeof(char), 3, fh);
+                unsigned char xloc = PacketProcessor::Number(buf[0]);
+                short id = PacketProcessor::Number(buf[1], buf[2]);
+
+                EMF_Graphic graphic;
+                graphic.layer = i;
+                graphic.x = xloc;
+                graphic.y = yloc;
+                graphic.id = id;
+                this->graphics.push_back(graphic);
+
+                if (!this->InBounds(xloc, yloc))
+                {
+                    printf("Graphic on map %i is outside of map bounds (%ix%i)\n", this->id, xloc, yloc);
+                    continue;
+                }
+            }
+        }
+	}
+
 	SAFE_SEEK(fh, 0x2E, SEEK_SET);
 	SAFE_READ(buf, sizeof(char), 1, fh);
 	outersize = PacketProcessor::Number(buf[0]);
 	for (int i = 0; i < outersize; ++i)
 	{
 		SAFE_READ(buf, sizeof(char), 8, fh);
-		/*unsigned char x = */PacketProcessor::Number(buf[0]);
-		/*unsigned char y = */PacketProcessor::Number(buf[1]);
-		/*short npc_id = */PacketProcessor::Number(buf[2], buf[3]);
-		/*unsigned char spawntype = */PacketProcessor::Number(buf[4]);
-		/*short spawntime = */PacketProcessor::Number(buf[5], buf[6]);
-		/*unsigned char amount = */PacketProcessor::Number(buf[7]);
+		PacketProcessor::Number(buf[0]); // x
+		PacketProcessor::Number(buf[1]); // y
+		PacketProcessor::Number(buf[2], buf[3]); // npc id
+		PacketProcessor::Number(buf[4]); // spawn type
+		PacketProcessor::Number(buf[5], buf[6]); // spawn time
+		PacketProcessor::Number(buf[7]); // amount
 	}
 
 	SAFE_READ(buf, sizeof(char), 1, fh);
@@ -193,13 +248,43 @@ bool EMF::Load()
 	for (int i = 0; i < outersize; ++i)
 	{
 		SAFE_READ(buf, sizeof(char), 12, fh);
-		/*unsigned char x = */PacketProcessor::Number(buf[0]);
-		/*unsigned char y = */PacketProcessor::Number(buf[1]);
-		/*short slot = */PacketProcessor::Number(buf[4]);
-		/*short itemid = */PacketProcessor::Number(buf[5], buf[6]);
-		/*short time = */PacketProcessor::Number(buf[7], buf[8]);
-		/*int amount = */PacketProcessor::Number(buf[9], buf[10], buf[11]);
+		PacketProcessor::Number(buf[0]); // x
+		PacketProcessor::Number(buf[1]); // u
+        PacketProcessor::Number(buf[4]); // slot
+		PacketProcessor::Number(buf[5], buf[6]); // item id
+		PacketProcessor::Number(buf[7], buf[8]); // time
+		PacketProcessor::Number(buf[9], buf[10], buf[11]); // amount
 	}
+
+	/*SAFE_READ(buf, sizeof(char), 1, fh);
+	unsigned char signs = PacketProcessor::Number(buf[0]);
+	printf("Signs %i\n", signs);
+	for(int i = 0; i < signs; ++i)
+    {
+        printf("Sign %i\n", i);
+        EMF_Sign sign;
+        SAFE_READ(buf, sizeof(char), 4, fh);
+        sign.x = PacketProcessor::Number(buf[0]);
+        sign.y = PacketProcessor::Number(buf[1]);
+        short length = PacketProcessor::Number(buf[2], buf[3]) - 1;
+        printf("length %i\n", length);
+        char str_buf[length];
+        SAFE_READ(str_buf, sizeof(char), length, fh);
+        std::string str(str_buf);
+        decode_str(&str[0], str.size());
+        SAFE_READ(buf, sizeof(char), 1, fh);
+        unsigned char title_length = PacketProcessor::Number(buf[0]);
+        sign.title = str.substr(0, title_length);
+        sign.message = str.substr(title_length);
+
+        if (!this->InBounds(sign.x, sign.y))
+        {
+            printf("Sign on map %i is outside of map bounds (%ix%i)\n", this->id, sign.x, sign.y);
+            continue;
+        }
+
+        this->signs.push_back(sign);
+    }*/
 
 	SAFE_SEEK(fh, 0x00, SEEK_END);
 	this->filesize = std::ftell(fh);
@@ -263,6 +348,19 @@ EMF_Warp& EMF::GetWarp(unsigned char x, unsigned char y)
 const EMF_Warp& EMF::GetWarp(unsigned char x, unsigned char y) const
 {
 	return this->GetTile(x, y).warp;
+}
+
+short EMF::GetGraphicID(unsigned char layer, unsigned char x, unsigned char y)
+{
+    for(std::size_t i = 0; i < this->graphics.size(); ++i)
+    {
+        if(this->graphics[i].layer == layer && this->graphics[i].x == x && this->graphics[i].y == y)
+        {
+            return this->graphics[i].id;
+        }
+    }
+
+    return 0;
 }
 
 bool EMF::Reload()

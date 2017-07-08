@@ -4,14 +4,18 @@
 #define SINGLETON_HPP_INCLUDED
 
 #include "randgen.hpp"
-#include "config.hpp"
-#include "eoclient.hpp"
-#include "eodata.hpp"
 #include "gfxloader.hpp"
 #include "gui.hpp"
+#include "inputhandler.hpp"
+#include "eoclient.hpp"
+#include "config.hpp"
+#include "eventprocessor.hpp"
+#include "eodata.hpp"
 #include "map.hpp"
+#include "inventory.hpp"
 
 #include <memory>
+#include <vector>
 
 using std::shared_ptr;
 
@@ -32,9 +36,14 @@ public:
     bool call_exit;
 
     RandomGenerator rand_gen;
-
-    shared_ptr<Config> config;
-    shared_ptr<EOClient> eoclient;
+    sf::RenderWindow window;
+    GFXLoader gfx_loader;
+    GUI gui;
+    InputHandler input_handler;
+    EOClient eoclient;
+    Config config;
+    EventProcessor eprocessor;
+    sf::Clock init_clock;
 
     shared_ptr<EMF> emf;
     shared_ptr<EIF> eif;
@@ -42,11 +51,9 @@ public:
     shared_ptr<ESF> esf;
     shared_ptr<ECF> ecf;
 
-    shared_ptr<GFXLoader> gfx_loader;
-
-    shared_ptr<GUI> gui;
-    shared_ptr<Map> map;
-    shared_ptr<Character> character;
+    Map map;
+    Character character;
+    Inventory inventory;
 };
 
 #endif // SINGLETON_HPP_INCLUDED

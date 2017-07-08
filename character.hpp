@@ -5,7 +5,23 @@
 
 #include "const/character.hpp"
 
+#include <SFML/Graphics.hpp>
 #include <string>
+
+class Animation
+{
+public:
+    int frames;
+    int delay;
+    int current_frame;
+    sf::Clock clock;
+    bool play;
+
+    Animation();
+    Animation(int frames, int delay);
+    int Process();
+    void Play();
+};
 
 class Character
 {
@@ -22,7 +38,7 @@ public:
 
     unsigned char clas;
 
-    unsigned char admin_level;
+    AdminLevel admin_level;
     unsigned char level;
 
     int exp;
@@ -67,7 +83,13 @@ public:
     SitState sitting;
     unsigned char visibility;
 
+    Animation animation;
+    int xoff;
+    int yoff;
+
     Character();
+    void Process();
+    void Draw(int x, int y);
 };
 
 #endif // CHARACTER_HPP_INCLUDED

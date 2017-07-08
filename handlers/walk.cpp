@@ -9,11 +9,10 @@ void Walk_Player(PacketReader reader)
 
     short gameworld_id = reader.GetShort();
 
-    shared_ptr<Character> character = s.map->GetCharacter(gameworld_id);
-    if(character.get())
-    {
-        character->direction = static_cast<Direction>(reader.GetChar());
-        character->x = reader.GetChar();
-        character->y = reader.GetChar();
-    }
+    int i = s.map.GetCharacterIndex(gameworld_id);
+    if(i == -1) return;
+
+    s.map.characters[i].direction = static_cast<Direction>(reader.GetChar());
+    s.map.characters[i].x = reader.GetChar();
+    s.map.characters[i].y = reader.GetChar();
 }

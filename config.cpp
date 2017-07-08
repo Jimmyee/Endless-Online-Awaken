@@ -1,9 +1,14 @@
-// Endless Online Awaken v0.0.1
+// Endless Online Bot v0.0.1
 
 #include "config.hpp"
 
 #include <fstream>
 #include <cstdio>
+
+Config::Config()
+{
+
+}
 
 Config::Config(std::string filename)
 {
@@ -41,7 +46,7 @@ bool Config::Load(std::string filename)
             break;
         }
 
-        std::string keyword = filedata_str.substr(pos + 1, equation_pos - pos - 1);
+        std::string key = filedata_str.substr(pos + 1, equation_pos - pos - 1);
 
         pos = filedata_str.find_first_of(']');
         if(pos == std::string::npos)
@@ -51,9 +56,49 @@ bool Config::Load(std::string filename)
         }
 
         std::string value = filedata_str.substr(equation_pos + 1, pos - equation_pos - 1);
-        filedata_str = filedata_str.substr(pos + 1);
-        this->values[keyword] = value;
+        std::string newdata = filedata_str.substr(pos + 1);
+        filedata_str = newdata;
+        this->entries.push_back(Entry(key, value));
     } while(pos != std::string::npos);
 
     return true;
+}
+
+void Config::Save(std::string filename)
+{
+    std::ofstream file(filename, std::ios::out | std::ios::trunc);
+    if(!file.is_open())
+    {
+        printf("Config: Could not open file");
+        return;
+    }
+
+    std::string data = "";
+    for(unsigned int i = 0; i < this->entries.size(); ++i)
+    {
+        data += '[' + this->entries[i].key + '=' + this->entries[i].value + ']' + '\n';
+
+    }
+    file.write(data.c_str(), data.size());
+    file.close();
+}
+
+Config::Entry Config::GetEntry(std::string key)
+{
+    for(unsigned int i = 0; i < this->entries.size(); ++i)
+    {
+        if(this->entries[i].key == key)
+        {
+            return this->entries[i];
+        }
+    }
+
+    return Entry("", "");
+}
+
+std::string Config::GetValue(std::string key)
+{
+    Entry entry = this->GetEntry(key);
+
+    return entry.value;
 }

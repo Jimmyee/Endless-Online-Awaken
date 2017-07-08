@@ -16,19 +16,19 @@ void INIT_INIT(PacketReader reader)
 
     if(result == InitReply::OK)
     {
-        s.eoclient->Initialize(reader);
+        s.eoclient.Initialize(reader);
 
-        s.eoclient->RegisterHandler(PacketFamily::Connection, PacketAction::Player, Connection_Player);
-        s.eoclient->RegisterHandler(PacketFamily::Login, PacketAction::Reply, Login_Reply);
-        s.eoclient->RegisterHandler(PacketFamily::Account, PacketAction::Reply, Account_Reply);
-        s.eoclient->RegisterHandler(PacketFamily::Welcome, PacketAction::Reply, Welcome_Reply);
+        s.eoclient.RegisterHandler(PacketFamily::Connection, PacketAction::Player, Connection_Player);
+        s.eoclient.RegisterHandler(PacketFamily::Login, PacketAction::Reply, Login_Reply);
+        s.eoclient.RegisterHandler(PacketFamily::Account, PacketAction::Reply, Account_Reply);
+        s.eoclient.RegisterHandler(PacketFamily::Welcome, PacketAction::Reply, Welcome_Reply);
 
         PacketBuilder packet(PacketFamily::Connection, PacketAction::Accept);
-        s.eoclient->Send(packet);
+        s.eoclient.Send(packet);
     }
     else
     {
         puts("EOClient: init failed");
-        s.eoclient->Disconnect();
+        s.eoclient.Disconnect();
     }
 }

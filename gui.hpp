@@ -85,7 +85,6 @@ public:
     };
 
 private:
-    sf::RenderWindow &window;
     sf::Clock clock;
     State state;
     shared_ptr<sf::Sprite> bg;
@@ -99,7 +98,8 @@ public:
     std::vector<TextField> text_fields;
     ChatConsole chat_console;
 
-    GUI(sf::RenderWindow &window_);
+    GUI();
+    void Initialize();
     void ProcessEvent(sf::Event &event);
     void Update();
     void Process();

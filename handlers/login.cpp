@@ -28,23 +28,23 @@ void Login_Reply(PacketReader reader)
             Character character;
             character.name = reader.GetBreakString();
             character.id = reader.GetInt();
-            reader.GetChar(); // level
-            reader.GetChar(); // gender
-            reader.GetChar(); // hair style
-            reader.GetChar(); // hair color
-            reader.GetChar(); // race
-            reader.GetChar(); // admin
+            character.level = reader.GetChar();
+            character.gender = static_cast<Gender>(reader.GetChar());
+            character.hair_style = reader.GetChar(); // hair style
+            character.hair_color = reader.GetChar(); // hair color
+            character.race = static_cast<Skin>(reader.GetChar()); // race
+            character.admin_level = static_cast<AdminLevel>(reader.GetChar()); // admin
             for(int j = 0; j < 5; ++j)
             {
                 reader.GetShort(); // paperdoll
             }
             reader.GetByte(); // break
 
-            s.eoclient->account_characters.push_back(shared_ptr<Character>(new Character(character)));
+            s.eoclient.account.characters.push_back(character);
         }
 
-        s.eoclient->SetState(EOClient::State::LoggedIn);
-        s.gui->SetState(GUI::State::CharacterList);
+        s.eoclient.SetState(EOClient::State::LoggedIn);
+        s.gui.SetState(GUI::State::CharacterList);
     }
     else
     {
@@ -70,6 +70,6 @@ void Login_Reply(PacketReader reader)
             message = "Sorry, the game server is currently busy.";
         }
 
-        s.gui->popup_modal = shared_ptr<GUI::PopupModal>(new GUI::PopupModal("msg_login", title, message, 0));
+        s.gui.popup_modal = shared_ptr<GUI::PopupModal>(new GUI::PopupModal("msg_login", title, message, 0));
     }
 }

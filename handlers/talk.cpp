@@ -11,11 +11,11 @@ void Talk_Player(PacketReader reader)
     std::string message = reader.GetEndString();
 
     std::string name = "[Unknown]";
-    shared_ptr<Character> character = s.map->GetCharacter(gameworld_id);
-    if(character.get())
+    int i = s.map.GetCharacterIndex(gameworld_id);
+    if(i != -1)
     {
-        name = character->name;
+        name = s.map.characters[i].name;
     }
 
-    s.gui->chat_console.AddMessage(GUI::ChatConsole::ChatMessage(name, message));
+    s.gui.chat_console.AddMessage(GUI::ChatConsole::ChatMessage(name, message));
 }

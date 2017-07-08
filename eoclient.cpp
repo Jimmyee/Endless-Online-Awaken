@@ -4,6 +4,9 @@
 #include "singleton.hpp"
 
 #include <string>
+#include <fstream>
+#include <time.h>
+#include <sys/timeb.h>
 
 EOClient::EOClient(bool initialize)
 {
@@ -22,10 +25,10 @@ EOClient::EOClient(bool initialize)
 
 bool EOClient::Connect()
 {
-    shared_ptr<Config> config = S::GetInstance().config;
+    Config &config = S::GetInstance().config;
 
-    std::string address = config->values["Address"];
-    unsigned short port = std::atoi(config->values["Port"].c_str());
+    std::string address = config.GetValue("Address");
+    unsigned short port = std::atoi(config.GetValue("Port").c_str());
 
     printf("Socket: Connecting to %s:%i\n", address.c_str(), port);
     sf::Socket::Status status = this->socket->connect(address, port);
@@ -254,7 +257,7 @@ void EOClient::Tick()
 void EOClient::Reset()
 {
     this->socket.reset();
-    this->socket = shared_ptr<sf::TcpSocket>(new sf::TcpSocket());
+    this->socket = unique_ptr<sf::TcpSocket>(new sf::TcpSocket());
     this->connected = false;
     std::fill((std::begin((this->send_buffer))), (std::end((this->send_buffer))), '\0');
     this->send_buffer.erase();
@@ -264,11 +267,13 @@ void EOClient::Reset()
     std::fill((std::begin((this->data))), (std::end((this->data))), '\0');
     this->data.erase();
     this->length = 0;
+    this->raw_length[0] = 0;
+    this->raw_length[1] = 0;
 	this->seq_start = 0;
 	this->seq = 0;
 	this->session_id = 0;
 	this->state = EOClient::State::Uninitialized;
-	this->account_characters.clear();
+	this->account.characters.clear();
 }
 
 void EOClient::InitSequenceByte(unsigned char s1, unsigned char s2)
@@ -376,22 +381,79 @@ void EOClient::SelectCharacter(unsigned int id)
     this->Send(packet);
 }
 
-shared_ptr<Character> EOClient::GetAccountCharacter(std::size_t index)
-{
-    for(std::size_t i = 0; i < this->account_characters.size(); ++i)
-    {
-        if(i == index)
-        {
-            return this->account_characters[i];
-        }
-    }
-
-    return shared_ptr<Character>(0);
-}
-
-void EOClient::Talk(std::string message)
+void EOClient::TalkPublic(std::string message)
 {
     PacketBuilder packet(PacketFamily::Talk, PacketAction::Report);
     packet.AddString(message);
+    this->Send(packet);
+}
+
+void EOClient::TalkGlobal(std::string message)
+{
+    PacketBuilder packet(PacketFamily::Talk, PacketAction::Message);
+    packet.AddString(message);
+    this->Send(packet);
+}
+
+void EOClient::TalkTell(std::string name, std::string message)
+{
+    PacketBuilder packet(PacketFamily::Talk, PacketAction::Tell);
+    packet.AddBreakString(name);
+    packet.AddString(message);
+    this->Send(packet);
+}
+
+void EOClient::Face(Direction direction)
+{
+    S::GetInstance().character.direction = direction;
+
+    PacketBuilder packet(PacketFamily::Face, PacketAction::Player);
+    packet.AddChar((unsigned char)direction);
+    this->Send(packet);
+}
+
+int GetTimestamp()
+{
+    time_t rawtime;
+    struct tm *realtime;
+    struct _timeb timebuffer;
+    int hour, minn, sec, msec;
+
+    time ( &rawtime );
+    realtime=localtime( &rawtime );
+    _ftime( &timebuffer );
+    hour = realtime->tm_hour;
+    minn = realtime->tm_min;
+    sec = realtime->tm_sec;
+    msec = timebuffer.millitm;
+
+    return hour*360000 + minn*6000 + sec*100 + msec/10;
+}
+
+bool EOClient::Walk(Direction direction)
+{
+    S &s = S::GetInstance();
+
+    int xoff[4] = { 0, -1, 0, 1 };
+    int yoff[4] = { 1, 0, -1, 0 };
+
+    if(static_cast<int>(direction) >= 0 || static_cast<int>(direction) <= 3)
+    {
+        PacketBuilder packet(PacketFamily::Walk, PacketAction::Player);
+        packet.AddChar((unsigned char)direction);
+        packet.AddThree(GetTimestamp());
+        packet.AddChar(s.character.x + xoff[static_cast<int>(direction)]);
+        packet.AddChar(s.character.y + yoff[static_cast<int>(direction)]);
+        this->Send(packet);
+
+        return true;
+    }
+
+    return false;
+}
+
+void EOClient::RefreshRequest()
+{
+    PacketBuilder packet(PacketFamily::Refresh, PacketAction::Request);
     this->Send(packet);
 }

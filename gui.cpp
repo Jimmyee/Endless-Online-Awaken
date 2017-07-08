@@ -10,10 +10,6 @@
 #include <chrono>
 #include <random>
 
-/*
-
-*/
-
 struct TextFilters
 {
     static int FilterImGuiLetters(ImGuiTextEditCallbackData* data)
@@ -103,7 +99,7 @@ void GUI::ChatConsole::AddMessage(ChatMessage message)
 void GUI::ChatConsole::Draw()
 {
     S &s = S::GetInstance();
-    shared_ptr<sf::Texture> tex = s.gfx_loader->LoadTexture(2, 28);
+    shared_ptr<sf::Texture> tex = s.gfx_loader.LoadTexture(2, 28);
 
     ImGuiWindowFlags window_flags = 0;
     window_flags |= ImGuiWindowFlags_NoTitleBar;
@@ -140,10 +136,16 @@ void GUI::ChatConsole::Draw()
     ImGui::EndChild();
 }
 
-GUI::GUI(sf::RenderWindow& window_)
-: window(window_)
+GUI::GUI()
 {
-    ImGui::SFML::Init(window, false);
+
+}
+
+void GUI::Initialize()
+{
+    S &s = S::GetInstance();
+
+    ImGui::SFML::Init(s.window, false);
 
     ImGui::GetStyle().Colors[ImGuiCol_WindowBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
     ImGui::GetStyle().WindowPadding = ImVec2(0.0f, 0.0f);
@@ -157,8 +159,7 @@ GUI::GUI(sf::RenderWindow& window_)
     ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_ButtonHovered, ImVec4(239.0f, 222.0f, 189.0f, 0.4f));
     ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_ButtonActive, ImVec4(239.0f, 222.0f, 189.0f, 0.7f));
 
-    S &s = S::GetInstance();
-    this->version_address = "0.0.1 - " + s.config->values["Address"];
+    this->version_address = "0.0.1 - " + s.config.GetValue("Address");
     std::transform(version_address.begin(), version_address.end(), version_address.begin(), ::toupper);
 
     this->SetState(State::StartScreen);
@@ -171,7 +172,9 @@ void GUI::ProcessEvent(sf::Event &event)
 
 void GUI::Update()
 {
-    ImGui::SFML::Update(this->window, this->clock.restart());
+    S &s = S::GetInstance();
+
+    ImGui::SFML::Update(s.window, this->clock.restart());
 }
 
 void GUI::Process()
@@ -196,9 +199,11 @@ void GUI::Process()
 
 void GUI::Draw()
 {
+    S &s = S::GetInstance();
+
     if(this->bg.get())
     {
-        this->window.draw(*this->bg);
+        s.window.draw(*this->bg);
     }
 
     ImGuiWindowFlags window_flags = 0;
@@ -254,7 +259,7 @@ void GUI::Draw()
 
     ImGui::End();
 
-    ImGui::SFML::Render(this->window);
+    ImGui::SFML::Render(s.window);
 }
 
 void GUI::Shutdown()
@@ -265,6 +270,7 @@ void GUI::Shutdown()
 void GUI::Reset()
 {
     this->SetState(State::StartScreen);
+    this->bg.reset();
 }
 
 void GUI::SetState(GUI::State state)
@@ -281,6 +287,7 @@ void GUI::SetState(GUI::State state)
     }
 
     this->text_fields.clear();
+
     if(this->state == State::CreateAccount)
     {
         this->text_fields.push_back(TextField("", 4, 16)); // account name
@@ -320,7 +327,7 @@ void GUI::DisplayPopupModal()
     if(!this->popup_modal.get()) return;
 
     int tex_ids[3] = { 18, 23, 25 };
-    shared_ptr<sf::Texture> tex = s.gfx_loader->LoadTexture(1, tex_ids[this->popup_modal->type]);
+    shared_ptr<sf::Texture> tex = s.gfx_loader.LoadTexture(1, tex_ids[this->popup_modal->type]);
 
     ImGuiWindowFlags window_flags = 0;
     window_flags |= ImGuiWindowFlags_NoTitleBar;
@@ -347,7 +354,7 @@ void GUI::DisplayPopupModal()
         ImGui::PopFont();
         ImGui::PopStyleColor();
 
-        tex = s.gfx_loader->LoadTexture(1, 15);
+        tex = s.gfx_loader.LoadTexture(1, 15);
         ImVec2 button_pos[3] = { ImVec2(180, 112), ImVec2(180, 80), ImVec2(180, 80) };
         int button_ids[3] = { 4, 1, 1 };
         ImGui::SetCursorPos(button_pos[this->popup_modal->type]);
@@ -371,7 +378,7 @@ void GUI::StartScreen()
         int rand_num = s.rand_gen.RandInt(0, 6);
 
         int tex_id = 30 + rand_num;
-        shared_ptr<sf::Texture> texture = s.gfx_loader->LoadTexture(1, tex_id);
+        shared_ptr<sf::Texture> texture = s.gfx_loader.LoadTexture(1, tex_id);
         this->bg = shared_ptr<sf::Sprite>(new sf::Sprite(*texture.get()));
     }
 
@@ -380,18 +387,18 @@ void GUI::StartScreen()
         int rand_num = s.rand_gen.RandInt(1, 4);
 
         int tex_id = 40 + rand_num;
-        shared_ptr<sf::Texture> texture = s.gfx_loader->LoadTexture(1, tex_id);
+        shared_ptr<sf::Texture> texture = s.gfx_loader.LoadTexture(1, tex_id);
         this->bg_avatar = shared_ptr<sf::Sprite>(new sf::Sprite(*texture));
         sf::FloatRect gb = this->bg_avatar->getGlobalBounds();
         this->bg_avatar->setPosition(640 - gb.width - 10, 480 - gb.height - 10);
     }
 
-    this->window.draw(*this->bg_avatar);
+    s.window.draw(*this->bg_avatar);
 
     ImGui::SetCursorPos(ImVec2(20.0f, 452.0f));
     ImGui::Text(this->version_address.c_str());
 
-    shared_ptr<sf::Texture> tex = s.gfx_loader->LoadTexture(1, 13);
+    shared_ptr<sf::Texture> tex = s.gfx_loader.LoadTexture(1, 13);
 
     int cx = 24;
     int cy = 270;
@@ -423,12 +430,13 @@ void GUI::StartScreen()
 
     if(pressed_id == 0 || pressed_id == 1)
     {
-        if(!s.eoclient->Connected())
+        if(!s.eoclient.Connected())
         {
             this->SetState(pressed_id == 0? State::RequestCreateAccount : State::RequestPlayGame);
-            if(s.eoclient->Connect())
+            if(s.eoclient.Connect())
             {
-                s.eoclient->RequestInit();
+                s.eoclient.RequestInit();
+                s.init_clock.restart();
             }
             else
             {
@@ -437,7 +445,7 @@ void GUI::StartScreen()
                 this->popup_modal = shared_ptr<PopupModal>(new PopupModal("msg_notconnect", title, message, 0));
             }
         }
-        else if(s.eoclient->Connected() && s.eoclient->GetState() == EOClient::State::Initialized)
+        else if(s.eoclient.Connected() && s.eoclient.GetState() == EOClient::State::Initialized)
         {
             this->SetState(pressed_id == 0? State::CreateAccount : State::Login);
             this->initialize_focus = true;
@@ -454,7 +462,7 @@ void GUI::StartScreen()
 
     if(this->state == State::RequestPlayGame)
     {
-        if(s.eoclient->GetState() == EOClient::State::Initialized)
+        if(s.eoclient.GetState() == EOClient::State::Initialized)
         {
             this->SetState(State::Login);
             this->initialize_focus = true;
@@ -462,7 +470,7 @@ void GUI::StartScreen()
     }
     else if(this->state == State::RequestCreateAccount)
     {
-        if(s.eoclient->GetState() == EOClient::State::Initialized)
+        if(s.eoclient.GetState() == EOClient::State::Initialized)
         {
             this->SetState(State::CreateAccount);
             this->initialize_focus = true;
@@ -477,7 +485,7 @@ void GUI::StartScreen()
         window_flags |= ImGuiWindowFlags_NoMove;
         window_flags |= ImGuiWindowFlags_NoScrollbar;
 
-        shared_ptr<sf::Texture> tex = s.gfx_loader->LoadTexture(1, 2, false);
+        shared_ptr<sf::Texture> tex = s.gfx_loader.LoadTexture(1, 2, false);
 
         ImGui::SetNextWindowSize(tex->getSize());
         ImGui::SameLine();
@@ -521,7 +529,7 @@ void GUI::StartScreen()
         ImGui::PopStyleColor(2);
         ImGui::PopFont();
 
-        tex = s.gfx_loader->LoadTexture(1, 15);
+        tex = s.gfx_loader.LoadTexture(1, 15);
         sf::Sprite btn1(*tex, sf::IntRect(0, 0, 91, 29));
         sf::Sprite btn2(*tex, sf::IntRect(91, 0, 91, 29));
         ImGui::SetCursorPos(ImVec2(94.0f, 104.0f));
@@ -549,7 +557,7 @@ void GUI::StartScreen()
 
             if(valid)
             {
-                s.eoclient->LoginRequest(this->text_fields[0].GetText(), this->text_fields[1].GetText());
+                s.eoclient.LoginRequest(this->text_fields[0].GetText(), this->text_fields[1].GetText());
             }
             else
             {
@@ -561,7 +569,7 @@ void GUI::StartScreen()
                 message += std::to_string(this->text_fields[field_index].min_len) + "-";
                 message += std::to_string(this->text_fields[field_index].max_len) + " letters.";
 
-                s.gui->popup_modal = shared_ptr<GUI::PopupModal>(new GUI::PopupModal("msg_login", title, message, 0));
+                s.gui.popup_modal = shared_ptr<GUI::PopupModal>(new GUI::PopupModal("msg_login", title, message, 0));
             }
         }
 
@@ -588,19 +596,19 @@ void GUI::AccountCreation()
         int rand_num = s.rand_gen.RandInt(1, 8);
 
         int tex_id = 60 + rand_num;
-        shared_ptr<sf::Texture> texture = s.gfx_loader->LoadTexture(1, tex_id);
+        shared_ptr<sf::Texture> texture = s.gfx_loader.LoadTexture(1, tex_id);
         this->bg_avatar = shared_ptr<sf::Sprite>(new sf::Sprite(*texture));
         sf::FloatRect gb = this->bg_avatar->getGlobalBounds();
         this->bg_avatar->setPosition(10, 480 - gb.height - 10);
     }
 
-    this->window.draw(*this->bg_avatar);
+    s.window.draw(*this->bg_avatar);
 
     ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_FrameBg, ImColor(165, 130, 105, 255));
     ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Text, ImColor(0, 0, 0, 255));
     ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[1]);
 
-    shared_ptr<sf::Texture> tex = s.gfx_loader->LoadTexture(1, 12);
+    shared_ptr<sf::Texture> tex = s.gfx_loader.LoadTexture(1, 12);
 
     ImGui::PushItemWidth(242.0f);
 
@@ -682,7 +690,7 @@ void GUI::AccountCreation()
     }
     ImGui::PopID();
 
-    tex = s.gfx_loader->LoadTexture(1, 14);
+    tex = s.gfx_loader.LoadTexture(1, 14);
     btn1.setTexture(*tex);
     btn1.setTextureRect(sf::IntRect(0, 0, 120, 40));
     btn2.setTexture(*tex);
@@ -716,7 +724,7 @@ void GUI::AccountCreation()
         {
             std::vector<TextField> cont = this->text_fields;
             this->create_account = shared_ptr<CreateAccount>(new CreateAccount());
-            s.eoclient->AccountRequest(this->text_fields[0].GetText());
+            s.eoclient.AccountRequest(this->text_fields[0].GetText());
 
             std::string title =  "Creating account...";
             this->popup_modal = shared_ptr<PopupModal>(new PopupModal("msg_create_acc", title, "", 1));
@@ -731,14 +739,14 @@ void GUI::AccountCreation()
             message += std::to_string(this->text_fields[field_index].min_len) + "-";
             message += std::to_string(this->text_fields[field_index].max_len) + " letters.";
 
-            s.gui->popup_modal = shared_ptr<GUI::PopupModal>(new GUI::PopupModal("msg_login", title, message, 0));
+            s.gui.popup_modal = shared_ptr<GUI::PopupModal>(new GUI::PopupModal("msg_login", title, message, 0));
         }
         else if(!passwords_same)
         {
             std::string title =  "Syntax is not correct";
             std::string message = "Both password fields should represent same text.";
 
-            s.gui->popup_modal = shared_ptr<GUI::PopupModal>(new GUI::PopupModal("msg_login", title, message, 0));
+            s.gui.popup_modal = shared_ptr<GUI::PopupModal>(new GUI::PopupModal("msg_login", title, message, 0));
         }
     }
     ImGui::PopID();
@@ -763,7 +771,7 @@ void GUI::AccountCreation()
         if(this->create_account->approved && this->create_account->creation_clock.getElapsedTime().asSeconds() >= 1.0)
         {
             std::vector<TextField> cont = this->text_fields;
-            s.eoclient->AccountCreate(cont[0].GetText(), cont[1].GetText(), cont[3].GetText(), cont[4].GetText(), cont[5].GetText());
+            s.eoclient.AccountCreate(cont[0].GetText(), cont[1].GetText(), cont[3].GetText(), cont[4].GetText(), cont[5].GetText());
             this->create_account.reset();
         }
 
@@ -787,32 +795,36 @@ void GUI::CharacterList()
         int rand_num = s.rand_gen.RandInt(1, 8);
 
         int tex_id = 60 + rand_num;
-        shared_ptr<sf::Texture> texture = s.gfx_loader->LoadTexture(1, tex_id);
+        shared_ptr<sf::Texture> texture = s.gfx_loader.LoadTexture(1, tex_id);
         this->bg_avatar = shared_ptr<sf::Sprite>(new sf::Sprite(*texture));
         sf::FloatRect gb = this->bg_avatar->getGlobalBounds();
         this->bg_avatar->setPosition(10, 480 - gb.height - 10);
     }
 
-    this->window.draw(*this->bg_avatar);
+    s.window.draw(*this->bg_avatar);
 
-    shared_ptr<sf::Texture> tex1 = s.gfx_loader->LoadTexture(1, 24);
+    shared_ptr<sf::Texture> tex1 = s.gfx_loader.LoadTexture(1, 24);
 
     ImGui::SetCursorPos(ImVec2(640.0f - tex1->getSize().x - 1.0f, -1.0f));
     ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Button, ImVec4(239.0f, 222.0f, 189.0f, 0.0f));
     ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_ButtonHovered, ImVec4(239.0f, 222.0f, 189.0f, 0.0f));
     ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_ButtonActive, ImVec4(239.0f, 222.0f, 189.0f, 0.0f));
-    if(ImGui::ImageAnimButton(sf::Sprite(*tex1, sf::IntRect(0, 0, 51, 53)),
-                                               sf::Sprite(*tex1, sf::IntRect(0, 53, 51, 53))))
-    {
-        s.eoclient->Disconnect();
-        this->SetState(GUI::State::StartScreen);
-    }
+    bool clicked = ImGui::ImageAnimButton(sf::Sprite(*tex1, sf::IntRect(0, 0, 51, 53)),
+                                               sf::Sprite(*tex1, sf::IntRect(0, 53, 51, 53)));
     ImGui::PopStyleColor();
     ImGui::PopStyleColor();
     ImGui::PopStyleColor();
 
-    tex1 = s.gfx_loader->LoadTexture(1, 11, false);
-    int pressed_id = -1;
+    if(clicked)
+    {
+        s.eoclient.Disconnect();
+        this->SetState(GUI::State::StartScreen);
+        return;
+    }
+
+
+    tex1 = s.gfx_loader.LoadTexture(1, 11, false);
+    unsigned int pressed_id = 0;
     bool pressed_login = false;
     bool pressed_delete = false;
     int button_id = 0;
@@ -823,17 +835,15 @@ void GUI::CharacterList()
         ImGui::PushID(i);
         ImGui::Image(*tex1);
         ImGui::PopID();
-        shared_ptr<sf::Texture> tex2 = s.gfx_loader->LoadTexture(1, 15);
+        shared_ptr<sf::Texture> tex2 = s.gfx_loader.LoadTexture(1, 15);
         ImGui::SameLine();
         ImGui::SetCursorPos(ImVec2(325.0f + 166.0f, y + 29.0f));
-        shared_ptr<Character> character = s.eoclient->GetAccountCharacter(i);
-        if(character.get())
+        if(s.eoclient.account.characters.size() >= i + 1)
         {
             ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[2]);
             ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Text, ImColor(180, 160, 140, 255));
-            std::string name_upper = character->name;
-            char lower = character->name[0];
-            name_upper[0] = toupper(lower);;
+            std::string name_upper = s.eoclient.account.characters[i].name;
+            name_upper[0] = toupper(name_upper[0]);;
             ImGui::Text(name_upper.c_str());
             ImGui::PopFont();
             ImGui::PopStyleColor();
@@ -864,12 +874,10 @@ void GUI::CharacterList()
 
     if(pressed_login)
     {
-        shared_ptr<Character> character = s.eoclient->GetAccountCharacter(pressed_id);
-
-        if(character.get())
+        if(s.eoclient.account.characters.size() >= pressed_id + 1)
         {
-            s.eoclient->SelectCharacter(character->id);
-            s.character = character;
+            s.eoclient.SelectCharacter(s.eoclient.account.characters[pressed_id].id);
+            s.character = s.eoclient.account.characters[pressed_id];
         }
         else
         {
@@ -881,7 +889,7 @@ void GUI::CharacterList()
 
     }
 
-    tex1 = s.gfx_loader->LoadTexture(1, 14);
+    tex1 = s.gfx_loader.LoadTexture(1, 14);
     ImGui::SetCursorPos(ImVec2(324.0f, 416.0f));
     if(ImGui::ImageAnimButton(sf::Sprite(*tex1, sf::IntRect(0, 0, 120, 40)),
                                                sf::Sprite(*tex1, sf::IntRect(120, 0, 120, 40))))
@@ -905,26 +913,29 @@ void GUI::GameWindow()
 
     if(!this->bg.get())
     {
-        shared_ptr<sf::Texture> texture = s.gfx_loader->LoadTexture(2, 1);
+        shared_ptr<sf::Texture> texture = s.gfx_loader.LoadTexture(2, 1);
         this->bg = shared_ptr<sf::Sprite>(new sf::Sprite(*texture.get()));
     }
 
-    shared_ptr<sf::Texture> tex1 = s.gfx_loader->LoadTexture(2, 39);
+    shared_ptr<sf::Texture> tex1 = s.gfx_loader.LoadTexture(2, 39);
 
     ImGui::SetCursorPos(ImVec2(640.0f - tex1->getSize().x - 1.0f, -1.0f));
     ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Button, ImVec4(239.0f, 222.0f, 189.0f, 0.0f));
     ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_ButtonHovered, ImVec4(239.0f, 222.0f, 189.0f, 0.0f));
     ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_ButtonActive, ImVec4(239.0f, 222.0f, 189.0f, 0.0f));
-    if(ImGui::ImageAnimButton(sf::Sprite(*tex1, sf::IntRect(0, 0, 51, 53)),
-                                               sf::Sprite(*tex1, sf::IntRect(0, 53, 51, 53))))
+    bool clicked = ImGui::ImageAnimButton(sf::Sprite(*tex1, sf::IntRect(0, 0, 51, 53)),
+                                               sf::Sprite(*tex1, sf::IntRect(0, 53, 51, 53)));
+    ImGui::PopStyleColor();
+    ImGui::PopStyleColor();
+    ImGui::PopStyleColor();
+
+    if(clicked)
     {
-        s.eoclient->Disconnect();
+        s.eoclient.Disconnect();
         this->SetState(GUI::State::StartScreen);
         this->bg.reset();
+        return;
     }
-    ImGui::PopStyleColor();
-    ImGui::PopStyleColor();
-    ImGui::PopStyleColor();
 
     ImGui::PushItemWidth(460.0f);
     ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_FrameBg, ImColor(165, 130, 105, 0));
@@ -937,8 +948,8 @@ void GUI::GameWindow()
     {
         if(this->text_fields[0].GetText().length() > 0)
         {
-            s.eoclient->Talk(this->text_fields[0].GetText());
-            this->chat_console.AddMessage(ChatConsole::ChatMessage(s.character->name, this->text_fields[0].GetText()));
+            s.eoclient.TalkPublic(this->text_fields[0].GetText());
+            this->chat_console.AddMessage(ChatConsole::ChatMessage(s.character.name, this->text_fields[0].GetText()));
             this->text_fields[0].text.clear();
         }
 

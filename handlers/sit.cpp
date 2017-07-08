@@ -9,28 +9,36 @@ void Sit_Player(PacketReader reader)
 
     short gameworld_id = reader.GetShort();
 
-    shared_ptr<Character> character = s.map->GetCharacter(gameworld_id);
-    if(!character.get()) return;
+    int i = s.map.GetCharacterIndex(gameworld_id);
+    if(i == -1) return;
 
-    character->x = reader.GetChar();
-    character->y = reader.GetChar();
-    character->direction = static_cast<Direction>(reader.GetChar());
+    s.map.characters[i].x = reader.GetChar();
+    s.map.characters[i].y = reader.GetChar();
+    s.map.characters[i].direction = static_cast<Direction>(reader.GetChar());
     reader.GetChar(); // 0 (?)
-    character->sitting = SitState::Floor;
+    s.map.characters[i].sitting = SitState::Floor;
+
+    if(s.map.characters[i].gameworld_id == s.character.gameworld_id)
+    {
+        s.character.sitting = s.map.characters[i].sitting;
+    }
 }
 
-void Sit_Remove(PacketReader reader)
+void Sit_Close(PacketReader reader)
 {
     S &s = S::GetInstance();
 
     short gameworld_id = reader.GetShort();
 
-    shared_ptr<Character> character = s.map->GetCharacter(gameworld_id);
-    if(!character.get())return;
+    int i = s.map.GetCharacterIndex(gameworld_id);
+    if(i == -1) return;
 
-    character->x = reader.GetChar();
-    character->y = reader.GetChar();
-    character->sitting = SitState::Stand;
+    s.map.characters[i].x = reader.GetChar();
+    s.map.characters[i].y = reader.GetChar();
+    s.map.characters[i].sitting = SitState::Stand;
 
-    s.eoclient->Talk(std::string() + "Hey you, " + character->name + "! Did you just stand up? Please sit back on your place!");
+    if(s.map.characters[i].gameworld_id == s.character.gameworld_id)
+    {
+        s.character.sitting = s.map.characters[i].sitting;
+    }
 }

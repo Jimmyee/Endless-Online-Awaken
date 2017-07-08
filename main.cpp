@@ -15,7 +15,7 @@ void initialize_data_handlers()
 {
     S &s = S::GetInstance();
 
-    s.config = shared_ptr<Config>(new Config("./config.ini"));
+    s.config.Load("./config.ini");
     s.eif = shared_ptr<EIF>(new EIF("./pub/dat001.eif"));
     s.enf = shared_ptr<ENF>(new ENF("./pub/dtn001.enf"));
     s.esf = shared_ptr<ESF>(new ESF("./pub/dsl001.esf"));
@@ -26,66 +26,101 @@ void initialize_data_handlers()
 
 int main()
 {
-    S &s = S::GetInstance();
-
     initialize_data_handlers();
 
-    sf::RenderWindow window(sf::VideoMode(640, 480), "Endless Online Awaken", sf::Style::Close);
-    window.setFramerateLimit(60);
+    S &s = S::GetInstance();
 
-    s.eoclient = shared_ptr<EOClient>(new EOClient());
-    s.gfx_loader = shared_ptr<GFXLoader>(new GFXLoader());
-    s.gui = shared_ptr<GUI>(new GUI(window));
-
-    while (window.isOpen())
+    sf::Uint32 style;
+    bool fullscreen = (bool)std::atoi(s.config.GetValue("Fullscreen").c_str());
+    if(fullscreen)
     {
-        if(s.eoclient.get())
+        style = sf::Style::Close | sf::Style::Fullscreen;
+    }
+    else
+    {
+        style = sf::Style::Close;
+    }
+    s.window.create(sf::VideoMode(640, 480), "Endless Online Awaken", style);
+    s.window.setFramerateLimit(60);
+
+    s.gui.Initialize();
+
+    //Atlas atlas(3, 724);
+
+    while(s.window.isOpen())
+    {
+        bool was_connected = s.eoclient.Connected();
+
+        if(s.eoclient.Connected())
         {
-            bool was_connected = s.eoclient->Connected();
-
-            s.eoclient->Tick();
-
-            if(was_connected && !s.eoclient->Connected())
+            if(s.eoclient.GetState() == EOClient::State::Uninitialized && s.init_clock.getElapsedTime().asSeconds() >= 10)
             {
-                s.gui->Disconnected();
+                puts("Initialization time out.");
+                s.eoclient.Disconnect();
             }
+        }
+
+        s.eoclient.Tick();
+
+        if(was_connected && !s.eoclient.Connected())
+        {
+            s.gui.Disconnected();
         }
 
         sf::Event event;
-        while (window.pollEvent(event))
+        while(s.window.pollEvent(event))
         {
-            s.gui->ProcessEvent(event);
+            s.gui.ProcessEvent(event);
 
-            if (event.type == sf::Event::Closed)
+            if(event.type == sf::Event::Closed)
             {
                 s.call_exit = true;
             }
+            else if(event.type == sf::Event::KeyPressed || event.type == sf::Event::KeyReleased)
+            {
+                s.input_handler.Process(event);
+            }
         }
 
-        s.gui->Update();
-        s.gui->Process();
+        s.gui.Update();
+        s.gui.Process();
+
+        s.eprocessor.Process();
+
+        if(s.gui.GetState() == GUI::State::PlayGame)
+        {
+            s.map.Process();
+        }
 
         //ImGui::SetNextWindowFocus();
         //ImGui::ShowTestWindow();
 
         if(s.call_exit)
         {
-            if(s.eoclient->Connected())
+            if(s.eoclient.Connected())
             {
-                s.eoclient->Disconnect();
+                s.eoclient.Disconnect();
             }
 
-            window.close();
+            s.window.close();
         }
 
-        window.clear();
+        s.window.clear();
 
-        s.gui->Draw();
+        if(s.gui.GetState() == GUI::State::PlayGame)
+        {
+            s.map.Draw();
+        }
 
-        window.display();
+        s.gui.Draw();
+        //sf::Sprite sprite(atlas.texture);
+        //sprite.setPosition(0, 0);
+        //s.window.draw(sprite);
+
+        s.window.display();
     }
 
-    s.gui->Shutdown();
+    s.gui.Shutdown();
 
     return 0;
 }

@@ -150,6 +150,24 @@ struct EMF_Tile
 	}
 };
 
+struct EMF_Graphic
+{
+    int layer;
+    unsigned char x;
+    unsigned char y;
+    short id;
+
+    EMF_Graphic() { layer = 0; x = 0; y = 0; id = 0; }
+};
+
+struct EMF_Sign
+{
+    unsigned char x;
+    unsigned char y;
+    std::string title;
+    std::string message;
+};
+
 /**
  * Contains all information about a map, holds reference to contained Characters and manages NPCs on it
  */
@@ -178,10 +196,13 @@ class EMF
 		int filesize;
 		unsigned char width;
 		unsigned char height;
+		short fill_tile;
 		bool scroll;
 		unsigned char relog_x;
 		unsigned char relog_y;
 		std::vector<EMF_Tile> tiles;
+		std::vector<EMF_Graphic> graphics;
+		std::vector<EMF_Sign> signs;
 		bool exists;
 		double jukebox_protect;
 		std::string jukebox_player;
@@ -197,6 +218,7 @@ class EMF
 		EMF_Tile::TileSpec GetSpec(unsigned char x, unsigned char y) const;
 		EMF_Warp& GetWarp(unsigned char x, unsigned char y);
 		const EMF_Warp& GetWarp(unsigned char x, unsigned char y) const;
+		short GetGraphicID(unsigned char layer, unsigned char x, unsigned char y);
 
 		bool Reload();
 

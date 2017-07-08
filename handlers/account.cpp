@@ -18,17 +18,17 @@ void Account_Reply(PacketReader reader)
         if(reply == AccountReply::Continue)
         {
             puts("OK: Account name approved");
-            s.gui->create_account->approved = true;
-            s.gui->create_account->creation_clock.restart();
+            s.gui.create_account->approved = true;
+            s.gui.create_account->creation_clock.restart();
 
         }
         else if(reply == AccountReply::Created)
         {
             puts("OK: Account created");
-            s.gui->SetState(GUI::State::StartScreen);
+            s.gui.SetState(GUI::State::StartScreen);
             std::string title =  "Account created!";
             std::string message = "Type your new username and password and log in to the game.";
-            s.gui->popup_modal = shared_ptr<GUI::PopupModal>(new GUI::PopupModal("msg_create_acc", title, message, 0));
+            s.gui.popup_modal = shared_ptr<GUI::PopupModal>(new GUI::PopupModal("msg_create_acc", title, message, 0));
         }
     }
     else if(reply_str == "NO")
@@ -47,6 +47,6 @@ void Account_Reply(PacketReader reader)
             message = "Account has not been approved.";
         }
 
-        s.gui->popup_modal = shared_ptr<GUI::PopupModal>(new GUI::PopupModal("msg_create_acc", title, message, 0));
+        s.gui.popup_modal = shared_ptr<GUI::PopupModal>(new GUI::PopupModal("msg_create_acc", title, message, 0));
     }
 }

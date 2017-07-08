@@ -9,5 +9,10 @@ void Avatar_Remove(PacketReader reader)
 
     short gameworld_id = reader.GetShort();
 
-    s.map->RemoveCharacter(gameworld_id);
+    if(reader.Remaining() > 0)
+    {
+        reader.GetByte(); // admin warp animation ID
+    }
+
+    s.map.RemoveCharacter(gameworld_id);
 }

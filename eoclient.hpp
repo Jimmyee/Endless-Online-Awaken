@@ -12,7 +12,12 @@
 #include <string>
 #include <memory>
 
-using std::shared_ptr;
+using std::unique_ptr;
+
+struct Account
+{
+    std::vector<Character> characters;
+};
 
 class EOClient // this is an "eo connection specialist" - it will be mainly used for management of connection and packets
 {
@@ -33,7 +38,7 @@ public:
     };
 
 private:
-    shared_ptr<sf::TcpSocket> socket;
+    unique_ptr<sf::TcpSocket> socket;
     bool connected;
 
     std::string send_buffer;
@@ -56,7 +61,7 @@ private:
 
 public:
     PacketProcessor processor;
-    std::vector<shared_ptr<Character>> account_characters;
+    Account account;
 
     EOClient(bool initialize = false);
     bool Connect();
@@ -80,9 +85,12 @@ public:
     void AccountRequest(std::string username);
     void AccountCreate(std::string username, std::string password, std::string real_name, std::string location, std::string email);
     void SelectCharacter(unsigned int id);
-    void Talk(std::string message);
-
-    shared_ptr<Character> GetAccountCharacter(std::size_t index);
+    void TalkPublic(std::string message);
+    void TalkGlobal(std::string message);
+    void TalkTell(std::string name, std::string message);
+    void Face(Direction direction);
+    bool Walk(Direction direction);
+    void RefreshRequest();
 };
 
 #endif // EOCLIENT_HPP_INCLUDED

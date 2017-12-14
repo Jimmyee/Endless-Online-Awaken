@@ -13,23 +13,19 @@ Please see changelog.txt for more information about updates.
 
 # Setup guide
 ## Client build requirements:
-```
-MinGW 6.1+ (https://sourceforge.net/projects/mingw/files/Installer/)
+* MinGW 6.1+ (https://sourceforge.net/projects/mingw/files/Installer/)
 
-Allegro 5.2.3.0
+* Allegro 5.2.3.0
 
-SFML 2.4.2 Network and System modules.
-```
+* SFML 2.4.2 Network and System modules.
 
 ## Server build requirements:
-```
-MinGW 6.1+ (https://sourceforge.net/projects/mingw/files/Installer/)
+* MinGW 6.1+ (https://sourceforge.net/projects/mingw/files/Installer/)
 
-SFML 2.4.2 Network and System modules.
+* SFML 2.4.2 Network and System modules.
 
 
-Project files for Code::Blocks coming soon :)
-```
+* Project files for Code::Blocks coming soon :)
 
 ## How to run client:
 ```

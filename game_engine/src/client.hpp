@@ -34,7 +34,7 @@ public:
     static PacketHandler packet_handler;
     static State state;
 
-    static std::vector<Character> characters; // account characters
+    static std::vector<std::shared_ptr<Character>> characters; // account characters
     static Character *character;
 
     Client();
@@ -45,7 +45,7 @@ public:
     void Send(sf::Packet &packet);
     sf::Packet Recv();
 
-    Character GetCharacter(std::string name);
+    Character *GetCharacter(std::string name);
     void RemoveCharacter(std::string name);
 
     void Init();

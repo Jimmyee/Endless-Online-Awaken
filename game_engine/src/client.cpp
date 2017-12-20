@@ -6,16 +6,16 @@
 #include <iostream>
 
 bool Client::initialized_ = false;
-bool Client::connected = false;
+bool Client::connected;
 std::vector<sf::Packet> Client::recv_queue;
 std::vector<sf::Packet> Client::send_queue;
 
 std::unique_ptr<sf::TcpSocket> Client::socket;
 PacketHandler Client::packet_handler;
-Client::State Client::state = Client::State::Uninitialized;
+Client::State Client::state;
 
-std::vector<Character> Client::characters;
-Character *Client::character = 0;
+std::vector<std::shared_ptr<Character>> Client::characters;
+Character *Client::character;
 
 Client::Client()
 {
@@ -23,6 +23,8 @@ Client::Client()
     {
         this->connected = false;
         this->state = State::Uninitialized;
+        this->character = 0;
+
         this->initialized_ = true;
     }
 }
@@ -130,7 +132,12 @@ void Client::Tick()
         break;
     }
 
-    if(!this->recv_queue.empty()) this->packet_handler.Execute(this->Recv());
+
+    if(!this->recv_queue.empty())
+    {
+        packet = this->Recv();
+        this->packet_handler.Execute(packet);
+    }
 }
 
 bool Client::Connected()
@@ -156,21 +163,21 @@ sf::Packet Client::Recv()
     return packet;
 }
 
-Character Client::GetCharacter(std::string name)
+Character *Client::GetCharacter(std::string name)
 {
     for(std::size_t i = 0; i < this->characters.size(); ++i)
     {
-        if(this->characters[i].name == name) return this->characters[i];
+        if(this->characters[i]->name == name) return this->characters[i].get();
     }
 
-    return Character();
+    return 0;
 }
 
 void Client::RemoveCharacter(std::string name)
 {
     for(std::size_t i = 0; i < this->characters.size(); ++i)
     {
-        if(this->characters[i].name == name)
+        if(this->characters[i]->name == name)
         {
             this->characters.erase(this->characters.begin() + i);
             return;

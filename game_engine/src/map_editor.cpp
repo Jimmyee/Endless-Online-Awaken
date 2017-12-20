@@ -11,8 +11,8 @@
 #include <iostream>
 
 bool MapEditor::initialized_ = false;
-int MapEditor::render_xoff = 0;
-int MapEditor::render_yoff = 0;
+int MapEditor::render_xoff;
+int MapEditor::render_yoff;
 
 MapEditor::MapEditor()
 {

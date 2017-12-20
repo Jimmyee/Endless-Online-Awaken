@@ -42,9 +42,9 @@ public:
     static unsigned short height;
     static unsigned int fill_tile;
 
-    static std::array<std::vector<Tile>, 1> tiles;
+    static std::array<std::vector<std::shared_ptr<Tile>>, 1> tiles;
 
-    static std::vector<Character> characters;
+    static std::vector<std::shared_ptr<Character>> characters;
 
     Map();
     Map(unsigned int id);
@@ -52,7 +52,7 @@ public:
     void Save();
     bool Exists() { return this->exists; }
     void Render(int rx, int ry);
-    Tile GetTile(unsigned char layer, unsigned short x, unsigned short y);
+    Tile *GetTile(unsigned char layer, unsigned short x, unsigned short y);
     void Reset();
 
     Character *GetCharacter(unsigned short x, unsigned short y);

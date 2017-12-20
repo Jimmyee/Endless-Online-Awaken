@@ -8,7 +8,8 @@ enum class PacketID : unsigned short
     Init,
     Login,
     Account,
-    Character
+    Character,
+    Map
 };
 
 #endif // CONST_HPP_INCLUDED

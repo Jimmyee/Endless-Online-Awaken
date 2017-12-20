@@ -3,12 +3,14 @@
 #include "server_state.hpp"
 
 bool ServerState::initialized_ = false;
-ServerState::State ServerState::state = ServerState::State::Run;
+ServerState::State ServerState::state;
 
 ServerState::ServerState()
 {
     if(!this->initialized_)
     {
+        this->state = ServerState::State::Run;
+
         this->initialized_ = true;
     }
 }

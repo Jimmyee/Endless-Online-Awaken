@@ -9,16 +9,16 @@
 #include <iostream>
 
 bool InputHandler::initialized_ = false;
-bool InputHandler::walk = false;
-Direction InputHandler::direction = static_cast<Direction>(0);
+bool InputHandler::walk;
+Direction InputHandler::direction;
 std::map<unsigned char, bool> InputHandler::keys;
 
 InputHandler::InputHandler()
 {
     if(!this->initialized_)
     {
-        walk = false;
-        direction = static_cast<Direction>(0);
+        this->walk = false;
+        this->direction = static_cast<Direction>(0);
 
         this->initialized_ = true;
     }

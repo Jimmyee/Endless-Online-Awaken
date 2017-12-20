@@ -40,7 +40,7 @@ static int lookup_account(void *data, int argc, char **argv, char **col_name)
 namespace PacketHandlers::HAccount
 {
 
-void Main(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
+void Main(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
 {
     Client *client = (Client *)data_ptr[0];
 
@@ -60,7 +60,7 @@ void Main(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
     }
 }
 
-void Create(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
+void Create(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
 {
     Client *client = (Client *)data_ptr[0];
     std::string username, password, real_name, location, email;
@@ -109,7 +109,7 @@ void Create(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
     client->Send(reply);
 }
 
-void Delete(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
+void Delete(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
 {
 
 }

@@ -8,9 +8,13 @@
 // (monostate)
 class MapHandler
 {
+private:
+    static bool initialized_;
+
 public:
     static std::map<unsigned int, Map> maps;
 
+    MapHandler();
     Map *GetMap(unsigned int id);
     void Clear();
 };

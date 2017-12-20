@@ -2,6 +2,7 @@
 
 #include "h_character.hpp"
 
+#include "h_map.hpp"
 #include "../client.hpp"
 #include "../gui.hpp"
 #include "../map.hpp"
@@ -11,7 +12,7 @@
 
 namespace PacketHandlers::HCharacter
 {
-    void Main(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
+    void Main(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
     {
         Client client;
 
@@ -45,7 +46,7 @@ namespace PacketHandlers::HCharacter
         }
     }
 
-    void Create(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
+    void Create(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
     {
         Client client;
         unsigned char answer = 0;
@@ -63,12 +64,12 @@ namespace PacketHandlers::HCharacter
             client.characters.clear();
             for(std::size_t i = 0; i < characters; ++i)
             {
-                Character character;
+                std::shared_ptr<Character> character = std::shared_ptr<Character>(new Character());
 
-                packet >> character.name;
+                packet >> character->name;
                 unsigned char gender = 0;
                 packet >> gender;
-                character.gender = (Gender)gender;
+                character->gender = (Gender)gender;
 
                 client.characters.push_back(character);
             }
@@ -82,7 +83,7 @@ namespace PacketHandlers::HCharacter
         }
     }
 
-    void Delete(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
+    void Delete(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
     {
         Client client;
         unsigned char answer = 0;
@@ -102,7 +103,7 @@ namespace PacketHandlers::HCharacter
         GUI().OpenPopup("Server answer", message);
     }
 
-    void List(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
+    void List(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
     {
         Client client;
 
@@ -116,15 +117,15 @@ namespace PacketHandlers::HCharacter
             packet >> name;
             packet >> gender;
 
-            Character character;
-            character.name = name;
-            character.gender = (Gender)gender;
+            std::shared_ptr<Character> character = std::shared_ptr<Character>(new Character());
+            character->name = name;
+            character->gender = (Gender)gender;
 
             client.characters.push_back(character);
         }
     }
 
-    void Select(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
+    void Select(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
     {
         Client client;
         unsigned char answer = 0;
@@ -136,25 +137,24 @@ namespace PacketHandlers::HCharacter
         if(answer == 1)
         {
             Map map;
-            std::string name = "";
-            unsigned char direction = 0;
-            unsigned char gender = 0;
 
             client.state = Client::State::Playing;
             GUI().SetState(GUI::State::Playing);
             GameState().Set(GameState::State::Playing);
 
+            client.packet_handler.Register(PacketID::Map, PacketHandlers::HMap::Appear, data_ptr);
+
             Character character;
+            unsigned char char_buf = 0;
             packet >> character.name;
             packet >> character.map_id;
             packet >> character.x;
             packet >> character.y;
-            packet >> direction;
-            character.direction = (Direction)direction;
+            packet >> char_buf; character.direction = (Direction)char_buf;
+            packet >> char_buf; character.gender = (Gender)char_buf;
 
             map.Load(character.map_id);
-            map.characters.push_back(character);
-            client.character = map.GetCharacter(character.name);
+            //map.characters.push_back(character);
 
             std::size_t chars_in_range = 0;
 
@@ -164,18 +164,20 @@ namespace PacketHandlers::HCharacter
 
             for(std::size_t i = 0; i < chars_in_range; ++i)
             {
-                Character character;
-                packet >> character.name;
-                packet >> character.map_id;
-                packet >> character.x;
-                packet >> character.y;
-                packet >> direction;
-                character.direction = (Direction)direction;
-                packet >> gender;
-                character.gender = (Gender)gender;
+                std::shared_ptr<Character> character = std::shared_ptr<Character>(new Character());
+
+                unsigned char char_buf = 0;
+                packet >> character->name;
+                packet >> character->map_id;
+                packet >> character->x;
+                packet >> character->y;
+                packet >> char_buf; character->direction = (Direction)char_buf;
+                packet >> char_buf; character->gender = (Gender)char_buf;
 
                 map.characters.push_back(character);
             }
+
+            client.character = map.GetCharacter(character.name);
 
             std::cout << "Char pos: " << character.x << "x" << character.y << std::endl;
         }
@@ -183,7 +185,7 @@ namespace PacketHandlers::HCharacter
         std::cout << message << std::endl;
     }
 
-    void Face(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
+    void Face(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
     {
         std::string name = "";
         unsigned char direction = 0;
@@ -195,7 +197,7 @@ namespace PacketHandlers::HCharacter
         character->direction = (Direction)direction;
     }
 
-    void Talk(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
+    void Talk(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
     {
         unsigned char channel = 0;
         std::string char_name = "";

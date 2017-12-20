@@ -14,7 +14,8 @@ class Server
 private:
     static bool initialized_;
     static sf::TcpListener listener;
-    static std::vector<std::unique_ptr<Client>> clients;
+    static std::vector<std::shared_ptr<sf::TcpSocket>> sockets;
+    static std::vector<std::shared_ptr<Client>> clients;
 
 public:
     Server();

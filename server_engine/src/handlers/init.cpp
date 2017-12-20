@@ -11,7 +11,7 @@
 namespace PacketHandlers::HInit
 {
 
-void Main(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
+void Main(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
 {
     Client *client = (Client *)data_ptr[0];
 
@@ -28,6 +28,7 @@ void Main(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
     client->Send(reply);
 
     std::cout << "Client initialized." << std::endl;
+    std::cout << "Client state: " << (int)client->state << std::endl;
 }
 
 }

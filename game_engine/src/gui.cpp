@@ -14,21 +14,27 @@
 #include <iostream>
 
 bool GUI::initialized_ = false;
-GUI::State GUI::state = GUI::State::MainMenu;
-unsigned int GUI::bg = 0;
-std::string GUI::open_popup = "";
-std::string GUI::popup_message = "";
-int GUI::input_focus = 0;
-bool GUI::clear_gfx = false;
+GUI::State GUI::state;
+unsigned int GUI::bg;
+std::string GUI::open_popup;
+std::string GUI::popup_message;
+int GUI::input_focus;
+bool GUI::clear_gfx;
 
 bool Chat::initialized_ = false;
 std::vector<std::pair<std::string, std::string>> Chat::messages;
-bool Chat::new_message = false;
+bool Chat::new_message;
 
 GUI::GUI()
 {
     if(!this->initialized_)
     {
+        this->state = GUI::State::MainMenu;
+        this->bg = 0;
+        this->open_popup = "";
+        this->popup_message = "";
+        this->input_focus = 0;
+        this->clear_gfx = false;
         this->SetState(State::MainMenu);
 
         this->initialized_ = true;
@@ -369,13 +375,16 @@ void GUI::Login(bool *p_open)
 
         if(!client.Connected())
         {
-            if(!client.Connect("localhost", 8078))
+            if(!client.Connect(Config().GetValue("Address"), 8078))
             {
                 this->OpenPopup("Connection error");
             }
         }
 
-        if(!usr.empty() && !pass.empty() && client.Connected()) Client().Login(usr, pass);
+        if(client.Connected())
+        {
+            if(!usr.empty() && !pass.empty()) Client().Login(usr, pass);
+        }
     }
 
     ImGui::End();
@@ -418,7 +427,7 @@ void GUI::CharacterList()
     static std::string name = "";
     for(std::size_t i = 0; i < client.characters.size(); ++i)
     {
-        ImGui::Text(client.characters[i].name.c_str());
+        ImGui::Text(client.characters[i]->name.c_str());
 
         ImVec2 uv0 = ImVec2(0, 0);
         ImVec2 uv1 = ImVec2(0.25, 1);
@@ -427,7 +436,7 @@ void GUI::CharacterList()
         ImGui::PushID(i);
         if(ImGui::Button("Login"))
         {
-            client.SelectCharacter(client.characters[i].name);
+            client.SelectCharacter(client.characters[i]->name);
         }
         ImGui::PopID();
         ImGui::SameLine();
@@ -442,7 +451,7 @@ void GUI::CharacterList()
         if(delete_char)
         {
             ImGui::OpenPopup("Delete character");
-            name = client.characters[i].name;
+            name = client.characters[i]->name;
         }
 
 
@@ -572,6 +581,8 @@ Chat::Chat()
 {
     if(this->initialized_)
     {
+        this->new_message = false;
+
         this->initialized_ = false;
     }
 }

@@ -11,7 +11,8 @@ Client::Client()
     this->connected = true;
     this->state = State::Uninitialized;
     this->username = "";
-    this->character = 0;
+    this->selected_character = "";
+    this->map_id = 0;
 }
 
 void Client::Tick()
@@ -23,7 +24,7 @@ void Client::Tick()
 
     if(!this->send_queue.empty())
     {
-        status = this->socket.send(this->send_queue[0]);
+        status = this->socket->send(this->send_queue[0]);
 
         switch(status)
         {
@@ -50,7 +51,7 @@ void Client::Tick()
         }
     }
 
-    status = this->socket.receive(packet);
+    status = this->socket->receive(packet);
 
     switch(status)
     {
@@ -75,7 +76,11 @@ void Client::Tick()
         break;
     }
 
-    if(!this->recv_queue.empty()) this->packet_handler.Execute(this->Recv());
+    if(!this->recv_queue.empty())
+    {
+        packet = this->Recv();
+        this->packet_handler.Execute(packet);
+    }
 }
 
 bool Client::Connected()
@@ -83,7 +88,7 @@ bool Client::Connected()
     return this->connected;
 }
 
-void Client::Send(sf::Packet &packet)
+void Client::Send(sf::Packet packet)
 {
     this->send_queue.push_back(packet);
 }
@@ -103,9 +108,9 @@ sf::Packet Client::Recv()
 
 Character *Client::GetCharacter(std::string name)
 {
-    for(std::size_t i = 0; i < this->characters.size(); ++i)
+    for(auto &it : this->characters)
     {
-        if(this->characters[i].name == name) return &this->characters[i];
+        if(it->name == name) return it.get();
     }
 
     return 0;
@@ -115,7 +120,7 @@ void Client::RemoveCharacter(std::string name)
 {
     for(std::size_t i = 0; i < this->characters.size(); ++i)
     {
-        if(this->characters[i].name == name)
+        if(this->characters[i]->name == name)
         {
             this->characters.erase(this->characters.begin() + i);
             return;

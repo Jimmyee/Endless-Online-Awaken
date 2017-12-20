@@ -67,7 +67,7 @@ static int lookup_free_slot(void *data, int argc, char **argv, char **col_name)
 namespace PacketHandlers::HCharacter
 {
 
-    void Main(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
+    void Main(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
     {
         unsigned char sub_id = 0;
         packet >> sub_id;
@@ -88,17 +88,17 @@ namespace PacketHandlers::HCharacter
         {
             Select(packet, data_ptr);
         }
-        if(sub_id == 5)
+        if(sub_id == 5) // change direction
         {
             Face(packet, data_ptr);
         }
-        if(sub_id == 6)
+        if(sub_id == 6) // chat
         {
             Talk(packet, data_ptr);
         }
     }
 
-    void Create(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
+    void Create(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
     {
         std::string name = "";
         unsigned char gender = 0;
@@ -131,7 +131,7 @@ namespace PacketHandlers::HCharacter
             if(!request->found)
             {
                 sql_query = "INSERT INTO characters VALUES ('" + client->username + "', '" + name + "', " \
-                + "1, 1, 1, " + std::to_string(gender) + ");";
+                + "1, 1, 1, 1, " + std::to_string(gender) + ");";
 
                 std::cout << sql_query << std::endl;
 
@@ -139,9 +139,12 @@ namespace PacketHandlers::HCharacter
 
                 if(ret == 0)
                 {
-                    Character character;
-                    character.name = name;
-                    character.gender = (Gender)gender;
+                    std::shared_ptr<Character> character = std::shared_ptr<Character>(new Character());
+                    character->name = name;
+                    character->map_id = 1;
+                    character->x = 1;
+                    character->y = 1;
+                    character->gender = (Gender)gender;
                     client->characters.push_back(character);
                     answer = 1;
                     message = "Character created.";
@@ -165,15 +168,15 @@ namespace PacketHandlers::HCharacter
             reply << characters;
             for(std::size_t i = 0; i < characters; ++i)
             {
-                reply << client->characters[i].name;
-                unsigned char gender = (unsigned char)client->characters[i].gender;
+                reply << client->characters[i]->name;
+                unsigned char gender = (unsigned char)client->characters[i]->gender;
                 reply << gender;
             }
         }
         client->Send(reply);
     }
 
-    void Delete(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
+    void Delete(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
     {
         Client *client = (Client *)data_ptr[0];
         Database database;
@@ -221,7 +224,7 @@ namespace PacketHandlers::HCharacter
         client->Send(reply);
     }
 
-    void List(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
+    void List(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
     {
         Client *client = (Client*)data_ptr[0];
         sf::Packet reply;
@@ -232,15 +235,15 @@ namespace PacketHandlers::HCharacter
         reply << characters;
         for(std::size_t i = 0; i < characters; ++i)
         {
-            reply << client->characters[i].name;
-            unsigned char gender = (unsigned char)client->characters[i].gender;
+            reply << client->characters[i]->name;
+            unsigned char gender = (unsigned char)client->characters[i]->gender;
             reply << gender;
         }
 
         client->Send(reply);
     }
 
-    void Select(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
+    void Select(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
     {
         Client *client = (Client *)data_ptr[0];
         std::string name = "";
@@ -251,42 +254,40 @@ namespace PacketHandlers::HCharacter
 
         unsigned char answer = 0;
         std::string message = "";
-        Map *map = 0;
         Character *character = client->GetCharacter(name);
+
         if(character != 0)
         {
-            MapHandler map_handler;
+            Map *map = MapHandler().GetMap(character->map_id);
+            map->characters.push_back(std::shared_ptr<Character>(new Character(*character)));
+            client->selected_character = name;
+            character = map->GetCharacter(name);
+            client->map_id = character->map_id;
 
-            map = map_handler.GetMap(character->map_id);
-            map->characters.push_back(*character);
-            client->character = map->GetCharacter(name);
+            std::cout << "welcome character name: " << character->name << std::endl;
 
             client->state = Client::State::Playing;
 
             answer = 1;
             message = "Welcome.";
-        }
-        else message = "Could not enter the game.";
 
-        sf::Packet reply;
-        reply << (unsigned short)PacketID::Character;
-        reply << (unsigned char)4; // sub id
-        reply << answer;
-        reply << message;
-        if(answer == 1)
-        {
-            reply << client->character->name;
-            reply << client->character->map_id;
-            reply << client->character->x;
-            reply << client->character->y;
-            reply << (unsigned char)client->character->direction;
+            sf::Packet reply;
+            reply << (unsigned short)PacketID::Character;
+            reply << (unsigned char)4; // sub id
+            reply << answer;
+            reply << message;
 
-            std::vector<Character> chars_in_range;
+            reply << character->name;
+            reply << character->map_id;
+            reply << character->x;
+            reply << character->y;
+            reply << (unsigned char)character->direction;
+            reply << (unsigned char)character->gender;
+
+            std::vector<std::shared_ptr<Character>> chars_in_range;
             for(auto &it : map->characters)
             {
-                if(it.name == client->character->name) continue;
-
-                int len = path_length(client->character->x, client->character->y, it.x, it.y);
+                int len = path_length(character->x, character->y, it->x, it->y);
 
                 if(len < 13)
                 {
@@ -298,18 +299,55 @@ namespace PacketHandlers::HCharacter
 
             for(auto &it : chars_in_range)
             {
-                reply << it.name;
-                reply << it.map_id;
-                reply << it.x;
-                reply << it.y;
-                reply << (unsigned char)it.direction;
-                reply << (unsigned char)it.gender;
+                reply << it->name;
+                reply << it->map_id;
+                reply << it->x;
+                reply << it->y;
+                reply << (unsigned char)it->direction;
+                reply << (unsigned char)it->gender;
             }
+
+            client->Send(reply);
+
+            reply.clear();
+
+            std::cout << "Character name: " << character->name << std::endl;
+
+            reply << (unsigned short)PacketID::Map;
+            reply << (unsigned char)1;
+            reply << character->name;
+            reply << character->map_id;
+            reply << character->x;
+            reply << character->y;
+            reply << (unsigned char)character->direction;
+            reply << (unsigned char)character->gender;
+
+            for(auto &it : chars_in_range)
+            {
+                if(it->name == character->name) continue;
+
+                Client *char_client = Server().GetClient(it->name);
+                char_client->Send(reply);
+            }
+
+            std::cout << "Client state: " << (int)client->state << std::endl;
+            std::cout << "Characters on the map: " << map->characters.size() << std::endl;
         }
-        client->Send(reply);
+        else
+        {
+            message = "Could not enter the game.";
+
+            sf::Packet reply;
+            reply << (unsigned short)PacketID::Character;
+            reply << (unsigned char)4; // sub id
+            reply << answer;
+            reply << message;
+
+            client->Send(reply);
+        }
     }
 
-    void Face(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
+    void Face(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
     {
         Client *client = (Client*)data_ptr[0];
         unsigned char direction = 0;
@@ -319,24 +357,22 @@ namespace PacketHandlers::HCharacter
         if(direction < 0 || direction > 3) return;
         if(client->state != Client::State::Playing) return;
 
-        client->character->direction = (Direction)direction;
-
-        std::cout << "face" << std::endl;
-
-        Map *map = MapHandler().GetMap(client->character->map_id);
+        Map *map = MapHandler().GetMap(client->map_id);
+        Character *character = map->GetCharacter(client->selected_character);
+        character->direction = (Direction)direction;
 
         sf::Packet reply;
         reply << (unsigned short)PacketID::Character;
         reply << (unsigned char)5;
-        reply << client->character->name;
-        reply << (unsigned char)client->character->direction;
+        reply << character->name;
+        reply << (unsigned char)character->direction;
 
-        std::vector<Character> chars_in_range;
+        std::vector<std::shared_ptr<Character>> chars_in_range;
         for(auto &it : map->characters)
         {
-            if(it.name == client->character->name) continue;
+            if(it->name == character->name) continue;
 
-            int len = path_length(client->character->x, client->character->y, it.x, it.y);
+            int len = path_length(character->x, character->y, it->x, it->y);
 
             if(len < 13)
             {
@@ -346,12 +382,12 @@ namespace PacketHandlers::HCharacter
 
         for(auto &it : chars_in_range)
         {
-            Client *char_client = Server().GetClient(it.name);
+            Client *char_client = Server().GetClient(it->name);
             char_client->Send(reply);
         }
     }
 
-    void Talk(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
+    void Talk(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
     {
         Client *client = (Client*)data_ptr[0];
         unsigned char channel = 0;
@@ -361,17 +397,25 @@ namespace PacketHandlers::HCharacter
         packet >> message;
 
         if(message.length() > 255) return;
-        if(client->state != Client::State::Playing) return;
+        if(client->state != Client::State::Playing)
+        {
+            std::cout << "HES NOT PLAYING (" << (int)client->state << ")" << std::endl;
+            std::cout << "SELECTED CHAR: " << client->selected_character << std::endl;
+            return;
+        }
 
         //temporary
         if(channel != 0) return;
 
-        Map *map = MapHandler().GetMap(client->character->map_id);
+        Map *map = MapHandler().GetMap(client->map_id);
+        Character *character = map->GetCharacter(client->selected_character);
 
-        std::vector<Character> chars_in_range;
+        std::vector<std::shared_ptr<Character>> chars_in_range;
         for(auto &it : map->characters)
         {
-            int len = path_length(client->character->x, client->character->y, it.x, it.y);
+            if(it->name == character->name) continue;
+
+            int len = path_length(character->x, character->y, it->x, it->y);
 
             if(len < 13)
             {
@@ -383,14 +427,23 @@ namespace PacketHandlers::HCharacter
         reply << (unsigned short)PacketID::Character;
         reply << (unsigned char)6; // talk
         reply << (unsigned char)0; // public
-        reply << client->character->name;
+        reply << character->name;
         reply << message;
+
+        std::cout << "in range: " << chars_in_range.size() << std::endl;
+
+        client->Send(reply);
 
         for(auto &it : chars_in_range)
         {
-            //if(it.name == client->character->name) continue;
+            Client *char_client = Server().GetClient(it->name);
 
-            Client *char_client = Server().GetClient(it.name);
+            std::cout << it->name << std::endl;
+            if(!char_client)
+            {
+                std::cout << "character " << it->name << " not found" << std::endl;
+                continue;
+            }
 
             char_client->Send(reply);
         }

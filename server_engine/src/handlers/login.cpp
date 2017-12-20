@@ -20,7 +20,7 @@ struct LoginRequest
 
 struct CharList
 {
-    std::vector<Character> characters;
+    std::vector<std::shared_ptr<Character>> characters;
 };
 
 static int validate_account(void *data, int argc, char **argv, char **col_name)
@@ -55,14 +55,14 @@ static int get_characters(void *data, int argc, char **argv, char **col_name)
 
     if(argc >= 5)
     {
-        Character character;
-        character.username = argv[0];
-        character.name = argv[1];
-        character.map_id = std::atoi(argv[2]);
-        character.x = std::atoi(argv[3]);
-        character.y = std::atoi(argv[4]);
-        character.direction = (Direction)std::atoi(argv[5]);
-        character.gender = (Gender)std::atoi(argv[6]);
+        std::shared_ptr<Character> character = std::shared_ptr<Character>(new Character());
+        character->username = argv[0];
+        character->name = argv[1];
+        character->map_id = std::atoi(argv[2]);
+        character->x = std::atoi(argv[3]);
+        character->y = std::atoi(argv[4]);
+        character->direction = (Direction)std::atoi(argv[5]);
+        character->gender = (Gender)std::atoi(argv[6]);
 
         charlist->characters.push_back(character);
     }
@@ -73,7 +73,7 @@ static int get_characters(void *data, int argc, char **argv, char **col_name)
 namespace PacketHandlers::HLogin
 {
 
-void Main(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
+void Main(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
 {
     Client *client = (Client *)data_ptr[0];
 
@@ -119,6 +119,7 @@ void Main(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
             client->characters = charlist->characters;
 
             std::cout << client->characters.size() << " characters found on this account." << std::endl;
+            std::cout << "Client state: " << (int)client->state << std::endl;
         }
         else
         {
@@ -138,9 +139,8 @@ void Main(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
             reply << characters;
             for(std::size_t i = 0; i < characters; ++i)
             {
-                reply << client->characters[i].name;
-                unsigned char gender = (unsigned char)client->characters[i].gender;
-                reply << gender;
+                reply << client->characters[i]->name;
+                reply << (unsigned char)client->characters[i]->gender;
             }
         }
         client->Send(reply);

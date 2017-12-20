@@ -8,7 +8,7 @@
 #include <SFML/Network.hpp>
 #include <functional>
 
-typedef std::function<void(sf::Packet packet, std::array<intptr_t, 4> data_ptr)> HandlerFunction;
+typedef std::function<void(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)> HandlerFunction;
 
 class PacketHandler
 {
@@ -21,7 +21,7 @@ public:
 
         Handler();
         Handler(PacketID packet_id, HandlerFunction func, std::array<intptr_t, 4> data_ptr);
-        void Execute(sf::Packet packet);
+        void Execute(sf::Packet &packet);
     };
 
 public:
@@ -30,7 +30,7 @@ public:
     void Register(PacketID id, HandlerFunction func, std::array<intptr_t, 4> data_ptr);
     void Unregister(PacketID id);
     void Clear();
-    void Execute(sf::Packet packet);
+    void Execute(sf::Packet &packet);
 };
 
 #endif // PACKET_HANDLER_HPP_INCLUDED

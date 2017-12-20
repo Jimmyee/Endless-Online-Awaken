@@ -4,12 +4,14 @@
 #include <iostream>
 
 bool Database::initialized_ = false;;
-sqlite3 *Database::db = NULL;
+sqlite3 *Database::db;
 
 Database::Database()
 {
     if(!this->initialized_)
     {
+        this->db = 0;
+
         this->initialized_ = true;
     }
 }

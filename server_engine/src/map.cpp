@@ -47,11 +47,11 @@ bool Map::Load(unsigned int id)
     std::size_t tiles = fh.GetInt();
     for(std::size_t i = 0; i < tiles; ++i)
     {
-        Tile tile;
-        tile.graphic_id = fh.GetInt();
-        tile.x = fh.GetShort();
-        tile.y = fh.GetShort();
-        tile.type = (Tile::Type)fh.GetChar();
+        std::shared_ptr<Tile> tile = std::shared_ptr<Tile>(new Tile());
+        tile->graphic_id = fh.GetInt();
+        tile->x = fh.GetShort();
+        tile->y = fh.GetShort();
+        tile->type = (Tile::Type)fh.GetChar();
 
         this->tiles[0].push_back(tile);
     }
@@ -83,14 +83,27 @@ void Map::Save()
 
     for(std::size_t i = 0; i < this->tiles[0].size(); ++i)
     {
-        fh.AddInt(this->tiles[0][i].graphic_id);
-        fh.AddShort(this->tiles[0][i].x);
-        fh.AddShort(this->tiles[0][i].y);
-        fh.AddChar((unsigned char)this->tiles[0][i].type);
+        fh.AddInt(this->tiles[0][i]->graphic_id);
+        fh.AddShort(this->tiles[0][i]->x);
+        fh.AddShort(this->tiles[0][i]->y);
+        fh.AddChar((unsigned char)this->tiles[0][i]->type);
     }
 
     fh.Save(filename);
     this->exists = fh.Exists();
+}
+
+Map::Tile *Map::GetTile(unsigned char layer, unsigned short x, unsigned short y)
+{
+    for(auto &it : this->tiles[layer])
+    {
+        if(it->x == x && it->y == y)
+        {
+            return it.get();
+        }
+    }
+
+    return 0;
 }
 
 void Map::Reset()
@@ -108,8 +121,8 @@ Character *Map::GetCharacter(unsigned short x, unsigned short y)
 {
     for(auto &it: characters)
     {
-        if(it.x == x && it.y == y)
-            return &it;
+        if(it->x == x && it->y == y)
+            return it.get();
     }
 
     return 0;
@@ -119,8 +132,8 @@ Character *Map::GetCharacter(unsigned int id)
 {
     for(auto &it: characters)
     {
-        if(it.id == id)
-            return &it;
+        if(it->id == id)
+            return it.get();
     }
 
     return 0;
@@ -130,8 +143,8 @@ Character *Map::GetCharacter(std::string name)
 {
     for(auto &it: characters)
     {
-        if(it.name == name)
-            return &it;
+        if(it->name == name)
+            return it.get();
     }
 
     return 0;
@@ -141,7 +154,7 @@ void Map::DeleteCharacter(std::string name)
 {
     for(std::size_t i = 0; i < this->characters.size(); ++i)
     {
-        if(this->characters[i].name == name)
+        if(this->characters[i]->name == name)
         {
             this->characters.erase(this->characters.begin() + i);
             return;

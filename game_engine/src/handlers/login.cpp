@@ -12,7 +12,7 @@
 
 namespace PacketHandlers::HLogin
 {
-    void Main(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
+    void Main(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
     {
         Client client;
         unsigned char sub_id = 0;
@@ -46,9 +46,9 @@ namespace PacketHandlers::HLogin
                     packet >> name;
                     packet >> gender;
 
-                    Character character;
-                    character.name = name;
-                    character.gender = (Gender)gender;
+                    std::shared_ptr<Character> character = std::shared_ptr<Character>(new Character());
+                    character->name = name;
+                    character->gender = (Gender)gender;
 
                     client.characters.push_back(character);
                 }

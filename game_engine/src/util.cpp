@@ -3,7 +3,7 @@
 #include "util.hpp"
 
 bool RandGen::initialized_;
-unsigned int RandGen::seed = 0;
+unsigned int RandGen::seed;
 std::mt19937 RandGen::gen;
 
 unsigned int DecodeNumber(unsigned char b1, unsigned char b2, unsigned char b3, unsigned char b4)

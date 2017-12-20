@@ -10,14 +10,14 @@
 #include <iostream>
 
 bool Map::initialized_ = false;
-bool Map::exists = false;
-unsigned int Map::id = 0;
-std::string Map::name = "";
-unsigned short Map::width = 1;
-unsigned short Map::height = 1;
-unsigned int Map::fill_tile = 0;
-std::array<std::vector<Map::Tile>, 1> Map::tiles;
-std::vector<Character> Map::characters;
+bool Map::exists;
+unsigned int Map::id;
+std::string Map::name;
+unsigned short Map::width;
+unsigned short Map::height;
+unsigned int Map::fill_tile;
+std::array<std::vector<std::shared_ptr<Map::Tile>>, 1> Map::tiles;
+std::vector<std::shared_ptr<Character>> Map::characters;
 
 Map::Map()
 {
@@ -25,6 +25,7 @@ Map::Map()
     {
         this->exists = false;
         this->id = 0;
+        this->name = "";
         this->width = 1;
         this->height = 1;
         this->fill_tile = 0;
@@ -37,6 +38,13 @@ Map::Map(unsigned int id)
 {
     if(!this->initialized_)
     {
+        this->exists = false;
+        this->id = 0;
+        this->name = "";
+        this->width = 1;
+        this->height = 1;
+        this->fill_tile = 0;
+
         this->initialized_ = true;
     }
 
@@ -70,11 +78,11 @@ bool Map::Load(unsigned int id)
     std::size_t tiles = fh.GetInt();
     for(std::size_t i = 0; i < tiles; ++i)
     {
-        Tile tile;
-        tile.graphic_id = fh.GetInt();
-        tile.x = fh.GetShort();
-        tile.y = fh.GetShort();
-        tile.type = (Tile::Type)fh.GetChar();
+        std::shared_ptr<Tile> tile = std::shared_ptr<Tile>(new Tile());
+        tile->graphic_id = fh.GetInt();
+        tile->x = fh.GetShort();
+        tile->y = fh.GetShort();
+        tile->type = (Tile::Type)fh.GetChar();
 
         this->tiles[0].push_back(tile);
     }
@@ -106,10 +114,10 @@ void Map::Save()
 
     for(std::size_t i = 0; i < this->tiles[0].size(); ++i)
     {
-        fh.AddInt(this->tiles[0][i].graphic_id);
-        fh.AddShort(this->tiles[0][i].x);
-        fh.AddShort(this->tiles[0][i].y);
-        fh.AddChar((unsigned char)this->tiles[0][i].type);
+        fh.AddInt(this->tiles[0][i]->graphic_id);
+        fh.AddShort(this->tiles[0][i]->x);
+        fh.AddShort(this->tiles[0][i]->y);
+        fh.AddChar((unsigned char)this->tiles[0][i]->type);
     }
 
     fh.Save(filename);
@@ -137,18 +145,18 @@ void Map::Render(int rx, int ry)
     }
 
     std::map<unsigned int, ALLEGRO_BITMAP *> bitmaps;
-    std::map<unsigned int, std::vector<Tile>> tiles_stagged;
+    std::map<unsigned int, std::vector<std::shared_ptr<Tile>>> tiles_stagged;
 
     for(auto &it : this->tiles[0])
     {
         ALLEGRO_BITMAP *tilegfx = NULL;
-        if(bitmaps.find(it.graphic_id) == bitmaps.end())
+        if(bitmaps.find(it->graphic_id) == bitmaps.end())
         {
-            tilegfx = GFXLoader().GetBitmap(3, it.graphic_id);
-            bitmaps[it.graphic_id] = tilegfx;
+            tilegfx = GFXLoader().GetBitmap(3, it->graphic_id);
+            bitmaps[it->graphic_id] = tilegfx;
         }
 
-        tiles_stagged[it.graphic_id].push_back(it);
+        tiles_stagged[it->graphic_id].push_back(it);
     }
 
     for(auto &ts : tiles_stagged)
@@ -156,8 +164,8 @@ void Map::Render(int rx, int ry)
         al_hold_bitmap_drawing(true);
         for(auto &it : ts.second)
         {
-            int screen_x = it.x * 64 - it.x * 32 - it.y * 32 + rx;
-            int screen_y = it.y * 16 + it.x * 16 + ry;
+            int screen_x = it->x * 64 - it->x * 32 - it->y * 32 + rx;
+            int screen_y = it->y * 16 + it->x * 16 + ry;
 
             al_draw_bitmap(bitmaps[ts.first], screen_x, screen_y, 0);
         }
@@ -168,21 +176,21 @@ void Map::Render(int rx, int ry)
 
     for(auto &it : this->characters)
     {
-        it.Render(rx, ry);
+        it->Render(rx, ry);
     }
 }
 
-Map::Tile Map::GetTile(unsigned char layer, unsigned short x, unsigned short y)
+Map::Tile *Map::GetTile(unsigned char layer, unsigned short x, unsigned short y)
 {
     for(auto &it : this->tiles[layer])
     {
-        if(it.x == x && it.y == y)
+        if(it->x == x && it->y == y)
         {
-            return it;
+            return it.get();
         }
     }
 
-    return Tile();
+    return 0;
 }
 
 void Map::Reset()
@@ -200,8 +208,8 @@ Character *Map::GetCharacter(unsigned short x, unsigned short y)
 {
     for(auto &it: characters)
     {
-        if(it.x == x && it.y == y)
-            return &it;
+        if(it->x == x && it->y == y)
+            return it.get();
     }
 
     return 0;
@@ -211,8 +219,8 @@ Character *Map::GetCharacter(unsigned int id)
 {
     for(auto &it: characters)
     {
-        if(it.id == id)
-            return &it;
+        if(it->id == id)
+            return it.get();
     }
 
     return 0;
@@ -222,8 +230,8 @@ Character *Map::GetCharacter(std::string name)
 {
     for(auto &it: characters)
     {
-        if(it.name == name)
-            return &it;
+        if(it->name == name)
+            return it.get();
     }
 
     return 0;
@@ -233,7 +241,7 @@ void Map::DeleteCharacter(std::string name)
 {
     for(std::size_t i = 0; i < this->characters.size(); ++i)
     {
-        if(this->characters[i].name == name)
+        if(this->characters[i]->name == name)
         {
             this->characters.erase(this->characters.begin() + i);
             return;

@@ -12,7 +12,7 @@
 namespace PacketHandlers::HAccount
 {
 
-    void Main(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
+    void Main(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
     {
         unsigned char sub_id = 0;
 
@@ -28,7 +28,7 @@ namespace PacketHandlers::HAccount
         }
     }
 
-    void Create(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
+    void Create(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
     {
         GUI gui;
         unsigned char answer = 0;
@@ -50,7 +50,7 @@ namespace PacketHandlers::HAccount
         }
     }
 
-    void Delete(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
+    void Delete(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
     {
 
     }

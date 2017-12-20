@@ -6,7 +6,7 @@
 
 bool GFXLoader::initialized_ = false;
 std::map<unsigned int, std::unique_ptr<GFXLoader::Directory>> GFXLoader::directories;
-std::string GFXLoader::path = "";
+std::string GFXLoader::path;
 
 GFXLoader::GFXLoader()
 {

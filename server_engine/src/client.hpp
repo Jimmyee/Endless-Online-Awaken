@@ -28,17 +28,18 @@ private:
 
 public:
     State state;
-    sf::TcpSocket socket;
+    std::shared_ptr<sf::TcpSocket> socket;
     PacketHandler packet_handler;
 
     std::string username;
-    std::vector<Character> characters;
-    Character *character;
+    std::vector<std::shared_ptr<Character>> characters;
+    std::string selected_character;
+    unsigned short map_id;
 
     Client();
     void Tick();
     bool Connected();
-    void Send(sf::Packet &packet);
+    void Send(sf::Packet packet);
     sf::Packet Recv();
 
     Character *GetCharacter(std::string name);

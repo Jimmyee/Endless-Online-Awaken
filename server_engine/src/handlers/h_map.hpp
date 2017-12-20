@@ -1,12 +1,12 @@
-#ifndef LOGIN_HPP_INCLUDED
-#define LOGIN_HPP_INCLUDED
+#ifndef H_MAP_HPP_INCLUDED
+#define H_MAP_HPP_INCLUDED
 
 #include <SFML/Network.hpp>
 #include <array>
 
-namespace PacketHandlers::HLogin
+namespace PacketHandlers::HMap
 {
     void Main(sf::Packet &packet, std::array<intptr_t, 4> data_ptr);
-};
+}
 
-#endif // LOGIN_HPP_INCLUDED
+#endif // H_MAP_HPP_INCLUDED

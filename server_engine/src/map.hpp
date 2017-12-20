@@ -8,6 +8,7 @@
 #include <string>
 #include <array>
 #include <vector>
+#include <memory>
 
 class Map
 {
@@ -40,16 +41,16 @@ public:
     unsigned short height;
     unsigned int fill_tile;
 
-    std::array<std::vector<Tile>, 1> tiles;
+    std::array<std::vector<std::shared_ptr<Tile>>, 1> tiles;
 
-    std::vector<Character> characters;
+    std::vector<std::shared_ptr<Character>> characters;
 
     Map();
     Map(unsigned int id);
     bool Load(unsigned int id);
     void Save();
     bool Exists() { return this->exists; }
-    Tile GetTile(unsigned char layer, unsigned short x, unsigned short y);
+    Tile *GetTile(unsigned char layer, unsigned short x, unsigned short y);
     void Reset();
 
     Character *GetCharacter(unsigned short x, unsigned short y);

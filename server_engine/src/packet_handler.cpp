@@ -15,7 +15,7 @@ PacketHandler::Handler::Handler(PacketID packet_id, HandlerFunction func, std::a
     this->data_ptr = data_ptr;
 }
 
-void PacketHandler::Handler::Execute(sf::Packet packet)
+void PacketHandler::Handler::Execute(sf::Packet &packet)
 {
     if(this->func != NULL) this->func(packet, this->data_ptr);
     else throw std::runtime_error("Network: Unknown data packet detected.");
@@ -42,7 +42,7 @@ void PacketHandler::Clear()
     this->handlers.clear();
 }
 
-void PacketHandler::Execute(sf::Packet packet)
+void PacketHandler::Execute(sf::Packet &packet)
 {
     unsigned short id;
     PacketID packet_id;

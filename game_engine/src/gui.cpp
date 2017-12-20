@@ -429,7 +429,11 @@ void GUI::CharacterList()
     {
         ImGui::Text(client.characters[i]->name.c_str());
 
-        ImVec2 uv0 = ImVec2(0, 0);
+        int w = al_get_bitmap_width(bitmap);
+        int frame_w = w / 4;
+        int gender_offset = (int)client.characters[i]->gender * frame_w;
+
+        ImVec2 uv0 = ImVec2(gender_offset, 0);
         ImVec2 uv1 = ImVec2(0.25, 1);
         ImGui::Image(bitmap, ImVec2(width / 4, height), uv0, uv1, ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
 

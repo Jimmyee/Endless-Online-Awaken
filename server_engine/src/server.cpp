@@ -1,10 +1,12 @@
 // Endless Online Awaken
 
 #include "server.hpp"
+
 #include "handlers/init.hpp"
 #include "const/packet.hpp"
 #include "map_handler.hpp"
 #include "database.hpp"
+#include "util.hpp"
 
 #include <iostream>
 #include <stdexcept>
@@ -45,7 +47,6 @@ void Server::Tick()
     {
         std::array<intptr_t, 4> ptr;
         std::shared_ptr<Client> client = std::shared_ptr<Client>(new Client());
-        //Client client;
 
         socket->setBlocking(false);
         client->socket = socket;
@@ -91,8 +92,6 @@ void Server::Tick()
             }
             if(this->clients[i]->state == Client::State::Playing)
             {
-                std::cout << "SELECTED CHARACTER: " << this->clients[i]->selected_character << std::endl;
-
                 for(std::size_t ii = 0; ii < this->clients[i]->characters.size(); ++ii)
                 {
                     if(this->clients[i]->characters[ii]->name == this->clients[i]->selected_character) continue;
@@ -132,6 +131,25 @@ void Server::Tick()
 
                 database.Execute(sql_query.c_str(), 0, 0);
 
+                sf::Packet packet;
+                packet << (unsigned short)PacketID::Map;
+                packet << (unsigned char)2; // leave
+                packet << character->name;
+
+                std::vector<std::shared_ptr<Character>> chars_in_range;
+                for(auto &it : map->characters)
+                {
+                    if(it->name == character->name) continue;
+
+                    int len = path_length(character->x, character->y, it->x, it->y);
+
+                    if(len < 13)
+                    {
+                        Client *char_client = this->GetClient(it->name);
+                        char_client->Send(packet);
+                    }
+                }
+
                 map->DeleteCharacter(character->name);
             }
 
@@ -168,14 +186,10 @@ Client *Server::GetClient(std::string char_name)
 {
     for(std::size_t i = 0; i < this->clients.size(); ++i)
     {
-        std::cout << "---looking for character..." << std::endl;
-
         if(this->clients[i]->selected_character == "") continue;
 
         Map *map = MapHandler().GetMap(this->clients[i]->map_id);
         Character *character = map->GetCharacter(this->clients[i]->selected_character);
-
-        std::cout << character->name << "---" << std::endl;
 
         if(character->name == char_name)
         {

@@ -142,16 +142,16 @@ namespace PacketHandlers::HCharacter
             GUI().SetState(GUI::State::Playing);
             GameState().Set(GameState::State::Playing);
 
-            client.packet_handler.Register(PacketID::Map, PacketHandlers::HMap::Appear, data_ptr);
+            client.packet_handler.Register(PacketID::Map, PacketHandlers::HMap::Main, data_ptr);
 
             Character character;
             unsigned char char_buf = 0;
             packet >> character.name;
             packet >> character.map_id;
-            packet >> character.x;
+            /*packet >> character.x;
             packet >> character.y;
             packet >> char_buf; character.direction = (Direction)char_buf;
-            packet >> char_buf; character.gender = (Gender)char_buf;
+            packet >> char_buf; character.gender = (Gender)char_buf;*/
 
             map.Load(character.map_id);
             //map.characters.push_back(character);

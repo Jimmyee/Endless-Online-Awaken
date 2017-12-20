@@ -12,5 +12,9 @@ namespace PacketHandlers::HMap
         {
 
         }
+        if(sub_id == 2) // an entity leaves
+        {
+
+        }
     }
 }

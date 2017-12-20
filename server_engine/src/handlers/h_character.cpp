@@ -279,10 +279,10 @@ namespace PacketHandlers::HCharacter
 
             reply << character->name;
             reply << character->map_id;
-            reply << character->x;
+            /*reply << character->x;
             reply << character->y;
             reply << (unsigned char)character->direction;
-            reply << (unsigned char)character->gender;
+            reply << (unsigned char)character->gender;*/
 
             std::vector<std::shared_ptr<Character>> chars_in_range;
             for(auto &it : map->characters)
@@ -314,7 +314,7 @@ namespace PacketHandlers::HCharacter
             std::cout << "Character name: " << character->name << std::endl;
 
             reply << (unsigned short)PacketID::Map;
-            reply << (unsigned char)1;
+            reply << (unsigned char)1; // appear
             reply << character->name;
             reply << character->map_id;
             reply << character->x;
@@ -397,12 +397,7 @@ namespace PacketHandlers::HCharacter
         packet >> message;
 
         if(message.length() > 255) return;
-        if(client->state != Client::State::Playing)
-        {
-            std::cout << "HES NOT PLAYING (" << (int)client->state << ")" << std::endl;
-            std::cout << "SELECTED CHAR: " << client->selected_character << std::endl;
-            return;
-        }
+        if(client->state != Client::State::Playing) return;
 
         //temporary
         if(channel != 0) return;

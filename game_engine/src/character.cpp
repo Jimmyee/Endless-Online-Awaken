@@ -43,12 +43,12 @@ void Character::Render(int rx, int ry)
     int frame_w = w / 4;
     int frame_h = h;
 
-    int screen_x = this->x * 64 - this->x * 32 - this->y * 32 + (frame_w / 2 + 16) + rx;
+    int screen_x = this->x * 64 - this->x * 32 - this->y * 32 + (frame_w / 2 + 24) + rx;
     int screen_y = this->y * 16 + this->x * 16 - frame_h + 20 + ry;
 
     int dir = (int)this->direction;
-    int gender_offset = (int)this->gender * frame_w;
-    int dir_offset[4] = { frame_w + gender_offset, 0, 0, frame_w + gender_offset };
+    int gender_offset = (int)this->gender * (frame_w * 2);
+    int dir_offset[4] = { frame_w + gender_offset, gender_offset, gender_offset, frame_w + gender_offset };
     int cx = frame_w / 2;
     int cy = 0;
     float scale_offset[4] = { -1, -1, 1, 1 };

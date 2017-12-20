@@ -174,9 +174,15 @@ void Map::Render(int rx, int ry)
 
     MapCursor().Render(rx, ry);
 
-    for(auto &it : this->characters)
+    for(int x = 0; x < this->width; ++x)
     {
-        it->Render(rx, ry);
+        for(int y = 0; y < this->height; ++y)
+        {
+            for(auto &it : this->characters)
+            {
+                if(it->x == x && it->y == y) it->Render(rx, ry);
+            }
+        }
     }
 }
 

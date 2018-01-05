@@ -8,7 +8,6 @@ Character::Character()
 {
     this->username = "";
     this->name = "";
-    this->id = 0;
     this->map_id = 0;
     this->x = 0;
     this->y = 0;
@@ -16,11 +15,10 @@ Character::Character()
     this->gender = Gender::Female;
 }
 
-Character::Character(std::string username, std::string name, unsigned int id, unsigned short map_id, unsigned short x, unsigned short y)
+Character::Character(std::string username, std::string name, unsigned short map_id, unsigned short x, unsigned short y)
 {
     this->username = username;
     this->name = name;
-    this->id = id;
     this->map_id = map_id;
     this->x = x;
     this->y = y;
@@ -37,4 +35,23 @@ void Character::Render(int rx, int ry)
 
     //ALLEGRO_BITMAP *bitmap = NULL;
     //bitmap = gfx_loader.GetBitmap(8, 1);
+}
+
+Character *Character::GetInRange(std::string name)
+{
+    for(auto &it : this->chars_in_range)
+    {
+        if(it->name == name) return it.get();
+    }
+
+    return 0;
+}
+
+void Character::DeleteInRange(std::string name)
+{
+    for(std::size_t i = 0; i < this->chars_in_range.size(); ++i)
+    {
+        if(this->chars_in_range[i]->name == name) this->chars_in_range.erase(this->chars_in_range.begin() + i);
+        return;
+    }
 }

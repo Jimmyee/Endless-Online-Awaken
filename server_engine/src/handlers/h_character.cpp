@@ -90,11 +90,19 @@ namespace PacketHandlers::HCharacter
         }
         if(sub_id == 5) // change direction
         {
-            Face(packet, data_ptr);
+            Talk(packet, data_ptr);
         }
         if(sub_id == 6) // chat
         {
-            Talk(packet, data_ptr);
+            Face(packet, data_ptr);
+        }
+        if(sub_id == 7) // walk
+        {
+            Walk(packet, data_ptr);
+        }
+        if(sub_id == 8) // get character in range by name
+        {
+            GetInRange(packet, data_ptr);
         }
     }
 
@@ -157,6 +165,7 @@ namespace PacketHandlers::HCharacter
         std::cout << message << std::endl;
 
         sf::Packet reply;
+
         reply << (unsigned short)PacketID::Character;
         reply << (unsigned char)1; // character creation
         reply << answer;
@@ -173,6 +182,7 @@ namespace PacketHandlers::HCharacter
                 reply << gender;
             }
         }
+
         client->Send(reply);
     }
 
@@ -227,6 +237,7 @@ namespace PacketHandlers::HCharacter
     void List(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
     {
         Client *client = (Client*)data_ptr[0];
+
         sf::Packet reply;
 
         reply << (unsigned short)PacketID::Character;
@@ -272,6 +283,7 @@ namespace PacketHandlers::HCharacter
             message = "Welcome.";
 
             sf::Packet reply;
+
             reply << (unsigned short)PacketID::Character;
             reply << (unsigned char)4; // sub id
             reply << answer;
@@ -330,6 +342,8 @@ namespace PacketHandlers::HCharacter
                 char_client->Send(reply);
             }
 
+            character->chars_in_range = chars_in_range;
+
             std::cout << "Client state: " << (int)client->state << std::endl;
             std::cout << "Characters on the map: " << map->characters.size() << std::endl;
         }
@@ -338,52 +352,13 @@ namespace PacketHandlers::HCharacter
             message = "Could not enter the game.";
 
             sf::Packet reply;
+
             reply << (unsigned short)PacketID::Character;
             reply << (unsigned char)4; // sub id
             reply << answer;
             reply << message;
 
             client->Send(reply);
-        }
-    }
-
-    void Face(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
-    {
-        Client *client = (Client*)data_ptr[0];
-        unsigned char direction = 0;
-
-        packet >> direction;
-
-        if(direction < 0 || direction > 3) return;
-        if(client->state != Client::State::Playing) return;
-
-        Map *map = MapHandler().GetMap(client->map_id);
-        Character *character = map->GetCharacter(client->selected_character);
-        character->direction = (Direction)direction;
-
-        sf::Packet reply;
-        reply << (unsigned short)PacketID::Character;
-        reply << (unsigned char)5;
-        reply << character->name;
-        reply << (unsigned char)character->direction;
-
-        std::vector<std::shared_ptr<Character>> chars_in_range;
-        for(auto &it : map->characters)
-        {
-            if(it->name == character->name) continue;
-
-            int len = path_length(character->x, character->y, it->x, it->y);
-
-            if(len < 13)
-            {
-                chars_in_range.push_back(it);
-            }
-        }
-
-        for(auto &it : chars_in_range)
-        {
-            Client *char_client = Server().GetClient(it->name);
-            char_client->Send(reply);
         }
     }
 
@@ -405,6 +380,8 @@ namespace PacketHandlers::HCharacter
         Map *map = MapHandler().GetMap(client->map_id);
         Character *character = map->GetCharacter(client->selected_character);
 
+        std::cout << character->name << ": " << message << std::endl;
+
         std::vector<std::shared_ptr<Character>> chars_in_range;
         for(auto &it : map->characters)
         {
@@ -419,8 +396,9 @@ namespace PacketHandlers::HCharacter
         }
 
         sf::Packet reply;
+
         reply << (unsigned short)PacketID::Character;
-        reply << (unsigned char)6; // talk
+        reply << (unsigned char)5; // talk
         reply << (unsigned char)0; // public
         reply << character->name;
         reply << message;
@@ -441,6 +419,194 @@ namespace PacketHandlers::HCharacter
             }
 
             char_client->Send(reply);
+
+            if(character->GetInRange(it->name) == 0)
+            {
+                sf::Packet reply_appear;
+
+                reply_appear << (unsigned short)PacketID::Map;
+                reply_appear << (unsigned char)1; // appear
+                reply_appear << it->name;
+                reply_appear << it->map_id;
+                reply_appear << it->x;
+                reply_appear << it->y;
+                reply_appear << (unsigned char)it->direction;
+                reply_appear << (unsigned char)it->gender;
+
+                client->Send(reply_appear);
+            }
         }
+
+        character->chars_in_range = chars_in_range;
+    }
+
+    void Face(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
+    {
+        Client *client = (Client*)data_ptr[0];
+        unsigned char direction = 0;
+
+        packet >> direction;
+
+        if(direction < 0 || direction > 3) return;
+        if(client->state != Client::State::Playing) return;
+
+        Map *map = MapHandler().GetMap(client->map_id);
+        Character *character = map->GetCharacter(client->selected_character);
+
+        character->direction = (Direction)direction;
+
+        sf::Packet reply;
+
+        reply << (unsigned short)PacketID::Character;
+        reply << (unsigned char)6;
+        reply << character->name;
+        reply << (unsigned char)character->direction;
+
+        std::cout << "characters on map: " << map->characters.size() << std::endl;
+
+        std::vector<std::shared_ptr<Character>> chars_in_range;
+        for(auto &it : map->characters)
+        {
+            if(it->name == character->name) continue;
+
+            int len = path_length(character->x, character->y, it->x, it->y);
+
+            if(len < 16)
+            {
+                chars_in_range.push_back(it);
+            }
+        }
+
+        std::cout << "chars in range: " << chars_in_range.size() << std::endl;
+
+        for(auto &it : chars_in_range)
+        {
+            Client *char_client = Server().GetClient(it->name);
+            char_client->Send(reply);
+
+            if(character->GetInRange(it->name) == 0)
+            {
+                sf::Packet reply_appear;
+
+                reply_appear << (unsigned short)PacketID::Map;
+                reply_appear << (unsigned char)1; // appear
+                reply_appear << it->name;
+                reply_appear << it->map_id;
+                reply_appear << it->x;
+                reply_appear << it->y;
+                reply_appear << (unsigned char)it->direction;
+                reply_appear << (unsigned char)it->gender;
+
+                client->Send(reply_appear);
+            }
+
+            std::cout << "SEND\n";
+        }
+
+        character->chars_in_range = chars_in_range;
+    }
+
+    void Walk(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
+    {
+        Client *client = (Client*)data_ptr[0];
+        unsigned char direction = 0;
+
+        packet >> direction;
+
+        if(direction < 0 || direction > 3) return;
+        if(client->state != Client::State::Playing) return;
+
+        Map *map = MapHandler().GetMap(client->map_id);
+        Character *character = map->GetCharacter(client->selected_character);
+
+        character->direction = (Direction)direction;
+
+        if(character->direction == Direction::Up && character->y > 0) character->y--;
+        if(character->direction == Direction::Right && character->x < map->width - 1) character->x++;
+        if(character->direction == Direction::Down && character->y < map->height - 1) character->y++;
+        if(character->direction == Direction::Left && character->x > 0) character->x--;
+
+        sf::Packet reply;
+
+        reply << (unsigned short)PacketID::Character;
+        reply << (unsigned char)7;
+        reply << character->name;
+        reply << (unsigned char)character->direction;
+        reply << character->x;
+        reply << character->y;
+
+        std::cout << "characters on map: " << map->characters.size() << std::endl;
+
+        std::vector<std::shared_ptr<Character>> chars_in_range;
+        for(auto &it : map->characters)
+        {
+            if(it->name == character->name) continue;
+
+            int len = path_length(character->x, character->y, it->x, it->y);
+
+            if(len < 16)
+            {
+                chars_in_range.push_back(it);
+            }
+        }
+
+        std::cout << "chars in range: " << chars_in_range.size() << std::endl;
+
+        std::cout << "ELO\n";
+
+        for(auto &it : chars_in_range)
+        {
+            Client *char_client = Server().GetClient(it->name);
+
+            std::cout << it->name << "\n";
+
+            char_client->Send(reply);
+
+            if(character->GetInRange(it->name) == 0)
+            {
+                sf::Packet reply_appear;
+
+                reply_appear << (unsigned short)PacketID::Map;
+                reply_appear << (unsigned char)1; // appear
+                reply_appear << it->name;
+                reply_appear << it->map_id;
+                reply_appear << it->x;
+                reply_appear << it->y;
+                reply_appear << (unsigned char)it->direction;
+                reply_appear << (unsigned char)it->gender;
+
+                client->Send(reply_appear);
+            }
+
+            std::cout << "SEND\n";
+        }
+
+        character->chars_in_range = chars_in_range;
+    }
+
+    void GetInRange(sf::Packet packet, std::array<intptr_t, 4> data_ptr)
+    {
+        Client *client = (Client*)data_ptr[0];
+        std::string name = "";
+
+        packet >> name;
+
+        Map *map = MapHandler().GetMap(client->map_id);
+        Character *character = map->GetCharacter(name);
+
+        if(character == 0) return;
+
+        sf::Packet reply;
+
+        reply << (unsigned short)PacketID::Map;
+        reply << (unsigned char)1; // appear
+        reply << character->name;
+        reply << character->map_id;
+        reply << character->x;
+        reply << character->y;
+        reply << (unsigned char)character->direction;
+        reply << (unsigned char)character->gender;
+
+        client->Send(reply);
     }
 }

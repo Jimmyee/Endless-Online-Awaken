@@ -34,6 +34,7 @@ int main(int, char**)
         ALLEGRO_EVENT_QUEUE* event_queue = NULL;
         ALLEGRO_TIMER *fps_timer = NULL;
         ALLEGRO_TIMER *input_timer = NULL;
+        ALLEGRO_TIMER *anim_timer = NULL;
 
         Config config("./data/config.ini");
 
@@ -65,7 +66,8 @@ int main(int, char**)
 
         fps_timer = al_create_timer(1.0 / FPS);
         input_timer = al_create_timer(0.01);
-        if(!fps_timer || !input_timer)
+        anim_timer = al_create_timer(0.120);
+        if(!fps_timer)
         {
             throw std::runtime_error("Could not create timers!");
         }
@@ -74,8 +76,10 @@ int main(int, char**)
         al_register_event_source(event_queue, al_get_mouse_event_source());
         al_register_event_source(event_queue, al_get_timer_event_source(fps_timer));
         al_register_event_source(event_queue, al_get_timer_event_source(input_timer));
+        al_register_event_source(event_queue, al_get_timer_event_source(anim_timer));
         al_start_timer(fps_timer);
         al_start_timer(input_timer);
+        al_start_timer(anim_timer);
 
         float sx = screen_width / (float)640;
         float sy = screen_height / (float)480;
@@ -146,12 +150,21 @@ int main(int, char**)
                     }
                     if(event.timer.source == input_timer)
                     {
+                        input_handler.Process();
+
                         if(input_handler.keys[ALLEGRO_KEY_F9] && gui.GetState() == GUI::State::MainMenu)
                         {
                             gui.SetState(GUI::State::Editor);
                         }
 
                         if(gui.GetState() == GUI::State::Editor) map_editor.ProcessInput();
+                    }
+                    if(event.timer.source == anim_timer)
+                    {
+                        for(auto &it : map.characters)
+                        {
+                            it->Tick();
+                        }
                     }
                 }
             }
@@ -164,11 +177,26 @@ int main(int, char**)
 
                 if(map.id != 0)
                 {
-                    int center_x = al_get_display_width(display) / 2 - 32;
-                    int center_y = al_get_display_height(display) / 2 - al_get_display_height(display) / 4 - 16;
+                    int screen_x = al_get_display_width(display) / 2 - 32;;
+                    int screen_y = (320 / 2) - 16; // 320 = render screen height + 10
 
-                    int screen_x = center_x;
-                    int screen_y = center_y;
+                    if(client.character != 0)
+                    {
+                        screen_x -= client.character->x * 64 - client.character->x * 32 - client.character->y * 32;
+                        screen_y -= client.character->y * 16 + client.character->x * 16;
+
+                        if(client.character->anim_state == Character::AnimState::Walk)
+                        {
+                            int position_off_x[4] = { -1, -1, 1, 1 };
+                            int position_off_y[4] = { 1, -1, -1, 1 };
+
+                            int dir_off_x = position_off_x[(int)client.character->direction];
+                            int dir_off_y = position_off_y[(int)client.character->direction];
+
+                            screen_x -= ((8 * (4 - (int)client.character->animation.current_frame)) * dir_off_x);
+                            screen_y -= ((4 * (4 - (int)client.character->animation.current_frame)) * dir_off_y);
+                        }
+                    }
 
                     if(gui.GetState() == GUI::State::Editor)
                     {

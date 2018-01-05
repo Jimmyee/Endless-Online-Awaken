@@ -15,16 +15,16 @@ private:
     static bool initialized_;
 
 public:
-    static bool walk;
-    static Direction direction;
     static std::map<unsigned char, bool> keys;
+    static Direction direction;
+    static bool rewalk;
 
     InputHandler();
 
     void ProcessEvent(ALLEGRO_EVENT event);
     void Process();
 
-    void CharacterDirection(ALLEGRO_KEYBOARD_EVENT event);
+    void CharacterMovement();
 };
 
 #endif // INPUT_HANDLER_HPP_INCLUDED

@@ -55,6 +55,10 @@ public:
     void DeleteCharacter(std::string name);
     void CharacterList();
     void SelectCharacter(std::string name);
+    void Talk(unsigned char channel, std::string message, std::string char_name = "");
+    void Face(Direction direction);
+    void Walk(Direction direction);
+    void GetInRange(std::string name);
 };
 
 #endif // CLIENT_HPP_INCLUDED

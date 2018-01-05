@@ -263,3 +263,48 @@ void Client::SelectCharacter(std::string name)
 
     this->Send(packet);
 }
+
+void Client::Talk(unsigned char channel, std::string message, std::string char_name)
+{
+    sf::Packet packet;
+
+    packet << (unsigned short)PacketID::Character;
+    packet << (unsigned char)5;
+    packet << channel;
+    packet << message;
+
+    this->Send(packet);
+}
+
+void Client::Face(Direction direction)
+{
+    sf::Packet packet;
+
+    packet << (unsigned short)PacketID::Character;
+    packet << (unsigned char)6;
+    packet << (unsigned char)direction;
+
+    this->Send(packet);
+}
+
+void Client::Walk(Direction direction)
+{
+    sf::Packet packet;
+
+    packet << (unsigned short)PacketID::Character;
+    packet << (unsigned char)7;
+    packet << (unsigned char)direction;
+
+    this->Send(packet);
+}
+
+void Client::GetInRange(std::string name)
+{
+    sf::Packet packet;
+
+    packet << (unsigned short)PacketID::Character;
+    packet << (unsigned char)8;
+    packet << name;
+
+    this->Send(packet);
+}

@@ -53,8 +53,7 @@ public:
     Tile *GetTile(unsigned char layer, unsigned short x, unsigned short y);
     void Reset();
 
-    Character *GetCharacter(unsigned short x, unsigned short y);
-    Character *GetCharacter(unsigned int id);
+    std::vector<Character *> GetCharactersAt(unsigned short x, unsigned short y);
     Character *GetCharacter(std::string name);
     void DeleteCharacter(std::string name);
 };

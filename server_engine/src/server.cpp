@@ -147,6 +147,8 @@ void Server::Tick()
                     {
                         Client *char_client = this->GetClient(it->name);
                         char_client->Send(packet);
+
+                        it->DeleteInRange(character->name);
                     }
                 }
 

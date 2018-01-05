@@ -25,16 +25,32 @@ namespace PacketHandlers::HMap
 
     void Appear(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
     {
-        std::shared_ptr<Character> character = std::shared_ptr<Character>(new Character());
+        Character *character = 0;
+        std::string name = "";
+
+        std::cout << "APPEAR\n";
+
         unsigned char char_buf = 0;
-        packet >> character->name;
+        packet >> name;
+
+        character = Map().GetCharacter(name);
+
+        if(character == 0)
+        {
+            character = new Character();
+            character->name = name;
+            Map().characters.push_back(std::shared_ptr<Character>(character));
+
+            std::cout << "total characters: " << Map().characters.size() << std::endl;
+        }
+
         packet >> character->map_id;
         packet >> character->x;
         packet >> character->y;
         packet >> char_buf; character->direction = (Direction)char_buf;
         packet >> char_buf; character->gender = (Gender)char_buf;
 
-        Map().characters.push_back(character);
+        //Map().characters.push_back(character);
     }
 
     void Leave(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)

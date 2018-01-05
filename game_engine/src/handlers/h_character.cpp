@@ -38,11 +38,15 @@ namespace PacketHandlers::HCharacter
         }
         if(sub_id == 5)
         {
-            Face(packet, data_ptr);
+            Talk(packet, data_ptr);
         }
         if(sub_id == 6)
         {
-            Talk(packet, data_ptr);
+            Face(packet, data_ptr);
+        }
+        if(sub_id == 7)
+        {
+            Walk(packet, data_ptr);
         }
     }
 
@@ -148,13 +152,8 @@ namespace PacketHandlers::HCharacter
             unsigned char char_buf = 0;
             packet >> character.name;
             packet >> character.map_id;
-            /*packet >> character.x;
-            packet >> character.y;
-            packet >> char_buf; character.direction = (Direction)char_buf;
-            packet >> char_buf; character.gender = (Gender)char_buf;*/
 
             map.Load(character.map_id);
-            //map.characters.push_back(character);
 
             std::size_t chars_in_range = 0;
 
@@ -179,22 +178,10 @@ namespace PacketHandlers::HCharacter
 
             client.character = map.GetCharacter(character.name);
 
-            std::cout << "Char pos: " << character.x << "x" << character.y << std::endl;
+            std::cout << "Char pos: " << client.character->x << "x" << client.character->y << std::endl;
         }
 
         std::cout << message << std::endl;
-    }
-
-    void Face(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
-    {
-        std::string name = "";
-        unsigned char direction = 0;
-
-        packet >> name;
-        packet >> direction;
-
-        Character *character = Map().GetCharacter(name);
-        character->direction = (Direction)direction;
     }
 
     void Talk(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
@@ -208,5 +195,57 @@ namespace PacketHandlers::HCharacter
         packet >> message;
 
         Chat().AddMessage(char_name, message);
+    }
+
+    void Face(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
+    {
+        std::string name = "";
+        unsigned char direction = 0;
+
+        packet >> name;
+        packet >> direction;
+
+        Character *character = Map().GetCharacter(name);
+
+        if(character == 0)
+        {
+            Client().GetInRange(name);
+
+            std::cout << "character not found, downloading..." << std::endl;
+
+            return;
+        }
+
+        character->Face((Direction)direction);
+    }
+
+    void Walk(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
+    {
+        std::string name = "";
+        unsigned char direction = 0;
+        unsigned short x = 0;
+        unsigned short y = 0;
+
+        packet >> name;
+        packet >> direction;
+        packet >> x;
+        packet >> y;
+
+        Character *character = Map().GetCharacter(name);
+
+        if(character == 0)
+        {
+            Client().GetInRange(name);
+
+            std::cout << "character not found, downloading..." << std::endl;
+
+            return;
+        }
+
+        character->Walk((Direction)direction);
+
+        character->direction = (Direction)direction;
+        character->x = x;
+        character->y = y;
     }
 }

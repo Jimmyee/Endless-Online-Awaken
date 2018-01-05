@@ -553,6 +553,7 @@ void GUI::ChatBox()
         if(!message.empty())
         {
             Client().character->Talk(0, message);
+            Client().Talk(0, message);
             strcpy(chat_input, "");
         }
         this->SetFocus(1);
@@ -567,6 +568,7 @@ void GUI::ChatBox()
     {
         std::string name = std::get<0>(it);
         name[0] = std::toupper(name[0]);
+        name += ": ";
         ImGui::Text(name.c_str()); ImGui::SameLine();
         ImGui::Text(std::get<1>(it).c_str());
 

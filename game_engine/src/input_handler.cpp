@@ -9,16 +9,16 @@
 #include <iostream>
 
 bool InputHandler::initialized_ = false;
-bool InputHandler::walk;
-Direction InputHandler::direction;
 std::map<unsigned char, bool> InputHandler::keys;
+Direction InputHandler::direction;
+bool InputHandler::rewalk;
 
 InputHandler::InputHandler()
 {
     if(!this->initialized_)
     {
-        this->walk = false;
         this->direction = static_cast<Direction>(0);
+        this->rewalk = false;
 
         this->initialized_ = true;
     }
@@ -26,14 +26,11 @@ InputHandler::InputHandler()
 
 void InputHandler::ProcessEvent(ALLEGRO_EVENT event)
 {
+    Client client;
+
     if(event.type == ALLEGRO_EVENT_KEY_DOWN)
     {
         this->keys[event.keyboard.keycode] = true;
-
-        if(event.keyboard.keycode >= ALLEGRO_KEY_LEFT && event.keyboard.keycode <= ALLEGRO_KEY_DOWN)
-        {
-            this->CharacterDirection(event.keyboard);
-        }
     }
     if(event.type == ALLEGRO_EVENT_KEY_UP)
     {
@@ -43,15 +40,59 @@ void InputHandler::ProcessEvent(ALLEGRO_EVENT event)
 
 void InputHandler::Process()
 {
+    Client client;
 
+    if(client.state != Client::State::Playing) return;
+
+    if(client.character->anim_state == Character::AnimState::Stand || client.character->anim_state == Character::AnimState::Walk)
+    {
+        this->CharacterMovement();
+    }
 }
 
-void InputHandler::CharacterDirection(ALLEGRO_KEYBOARD_EVENT event)
+void InputHandler::CharacterMovement()
 {
     Client client;
 
-    if(event.keycode == ALLEGRO_KEY_UP) client.character->Face(Direction::Up);
-    if(event.keycode == ALLEGRO_KEY_RIGHT) client.character->Face(Direction::Right);
-    if(event.keycode == ALLEGRO_KEY_DOWN) client.character->Face(Direction::Down);
-    if(event.keycode == ALLEGRO_KEY_LEFT) client.character->Face(Direction::Left);
+    bool walk = false;
+    bool do_rewalk = false;
+
+    for(int i = ALLEGRO_KEY_LEFT; i <= ALLEGRO_KEY_DOWN; ++i)
+    {
+        if(this->keys[i])
+        {
+            if(client.character->anim_state == Character::AnimState::Stand)
+            {
+                walk = true;
+            }
+            if(client.character->anim_state == Character::AnimState::Walk)
+            {
+                this->rewalk = true;
+                do_rewalk = true;
+            }
+
+            break;
+        }
+    }
+
+    if(this->keys[ALLEGRO_KEY_UP]) this->direction = Direction::Up;
+    else if(this->keys[ALLEGRO_KEY_RIGHT]) this->direction = Direction::Right;
+    else if(this->keys[ALLEGRO_KEY_DOWN]) this->direction = Direction::Down;
+    else if(this->keys[ALLEGRO_KEY_LEFT]) this->direction = Direction::Left;
+
+    if((walk || this->rewalk) && client.character->anim_state == Character::AnimState::Stand && !client.character->animation.play)
+    {
+        if(client.character->direction != this->direction && !this->rewalk)
+        {
+            client.character->Face(this->direction);
+            client.Face(this->direction);
+        }
+        else
+        {
+            client.character->Walk(this->direction);
+            client.Walk(this->direction);
+        }
+    }
+
+    this->rewalk = do_rewalk;
 }

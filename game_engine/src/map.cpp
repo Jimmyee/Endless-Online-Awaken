@@ -210,26 +210,19 @@ void Map::Reset()
     this->characters.clear();
 }
 
-Character *Map::GetCharacter(unsigned short x, unsigned short y)
+std::vector<Character *> Map::GetCharactersAt(unsigned short x, unsigned short y)
 {
+    std::vector<Character *> ret;
+
     for(auto &it: characters)
     {
         if(it->x == x && it->y == y)
-            return it.get();
+        {
+            ret.push_back(it.get());
+        }
     }
 
-    return 0;
-}
-
-Character *Map::GetCharacter(unsigned int id)
-{
-    for(auto &it: characters)
-    {
-        if(it->id == id)
-            return it.get();
-    }
-
-    return 0;
+    return ret;
 }
 
 Character *Map::GetCharacter(std::string name)

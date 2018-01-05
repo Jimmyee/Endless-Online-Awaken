@@ -12,8 +12,11 @@ namespace PacketHandlers::HCharacter
     void List(sf::Packet &packet, std::array<intptr_t, 4> data_ptr);
     void Select(sf::Packet &packet, std::array<intptr_t, 4> data_ptr);
 
-    void Face(sf::Packet &packet, std::array<intptr_t, 4> data_ptr);
     void Talk(sf::Packet &packet, std::array<intptr_t, 4> data_ptr);
+    void Face(sf::Packet &packet, std::array<intptr_t, 4> data_ptr);
+    void Walk(sf::Packet &packet, std::array<intptr_t, 4> data_ptr);
+
+    void GetInRange(sf::Packet packet, std::array<intptr_t, 4> data_ptr);
 };
 
 #endif // H_CHARACTER_HPP_INCLUDED

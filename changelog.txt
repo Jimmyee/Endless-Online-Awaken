@@ -12,3 +12,5 @@
 - very simple chat (public chat only)
 - support for multiple characters
 - support for managing multiple maps at once
+- character walk feature
+- improved character management while walking

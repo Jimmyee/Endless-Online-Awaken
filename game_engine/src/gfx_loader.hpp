@@ -21,7 +21,7 @@ public:
 
     public:
         Directory(std::string path, unsigned int id);
-        ALLEGRO_BITMAP *GetBitmap(unsigned int id, bool mask = true);
+        ALLEGRO_BITMAP *GetBitmap(unsigned int id, bool mask = true, std::string format = "");
         void Clear();
     };
 
@@ -34,7 +34,7 @@ public:
 
     GFXLoader();
     GFXLoader(std::string path);
-    ALLEGRO_BITMAP *GetBitmap(unsigned int dir_id, unsigned int bmp_id, bool mask = true);
+    ALLEGRO_BITMAP *GetBitmap(unsigned int dir_id, unsigned int bmp_id, bool mask = true, std::string format = "");
     void Clear();
 };
 

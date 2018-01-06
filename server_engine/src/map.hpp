@@ -37,6 +37,7 @@ private:
 public:
     unsigned int id;
     std::string name;
+    unsigned int revision;
     unsigned short width;
     unsigned short height;
     unsigned int fill_tile;

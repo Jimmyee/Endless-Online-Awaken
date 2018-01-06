@@ -5,6 +5,7 @@
 #include "file_handler.hpp"
 #include "gui.hpp"
 #include "map_cursor.hpp"
+#include "font_handler.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -13,6 +14,7 @@ bool Map::initialized_ = false;
 bool Map::exists;
 unsigned int Map::id;
 std::string Map::name;
+unsigned int Map::revision;
 unsigned short Map::width;
 unsigned short Map::height;
 unsigned int Map::fill_tile;
@@ -26,6 +28,7 @@ Map::Map()
         this->exists = false;
         this->id = 0;
         this->name = "";
+        this->revision = 0;
         this->width = 1;
         this->height = 1;
         this->fill_tile = 0;
@@ -41,6 +44,7 @@ Map::Map(unsigned int id)
         this->exists = false;
         this->id = 0;
         this->name = "";
+        this->revision = 0;
         this->width = 1;
         this->height = 1;
         this->fill_tile = 0;
@@ -71,6 +75,7 @@ bool Map::Load(unsigned int id)
     if(!this->exists) return false;
 
     this->name = fh.GetString();
+    this->revision = fh.GetInt();
     this->width = fh.GetShort();
     this->height = fh.GetShort();
     this->fill_tile = fh.GetInt();
@@ -105,6 +110,7 @@ void Map::Save()
     FileHandler fh;
 
     fh.AddString(this->name);
+    fh.AddInt(++this->revision);
     fh.AddShort(this->width);
     fh.AddShort(this->height);
     fh.AddInt(this->fill_tile);
@@ -180,9 +186,28 @@ void Map::Render(int rx, int ry)
         {
             for(auto &it : this->characters)
             {
-                if(it->x == x && it->y == y) it->Render(rx, ry);
+                if(it->x == x && it->y == y) it->RenderNew(rx, ry);
             }
         }
+    }
+
+    std::string nickname = MapCursor().nickname;
+
+    if(nickname != "")
+    {
+        ALLEGRO_FONT *font = FontHandler().font;
+        float alpha = 0.5f;
+        ALLEGRO_COLOR color = al_map_rgba_f(1.0, 1.0, 1.0, alpha);
+
+        Character *charr = this->GetCharacter(nickname);
+
+        if(charr == 0) return;
+
+        int text_w = al_get_text_width(font, nickname.c_str());
+
+        std::vector<int> char_pos = charr->GetScreenPos();
+        al_draw_text(font, color, char_pos[0] - text_w / 2, char_pos[1] - 6, 0, nickname.c_str());
+
     }
 }
 
@@ -203,6 +228,7 @@ void Map::Reset()
 {
     this->id = 0;
     this->name.clear();
+    this->revision = 0;
     this->width = 1;
     this->height = 1;
     this->fill_tile = 0;

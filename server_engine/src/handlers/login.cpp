@@ -5,6 +5,7 @@
 #include "h_character.hpp"
 #include "../client.hpp"
 #include "../database.hpp"
+#include "../server.hpp"
 
 #include <iostream>
 #include <memory>
@@ -70,6 +71,21 @@ static int get_characters(void *data, int argc, char **argv, char **col_name)
     return 0;
 }
 
+static bool validate_string(std::string str)
+{
+    for(std::size_t i = 0; i < str.size(); ++i)
+    {
+        bool valid = false;
+
+        if((str[i] >= 48 && str[i] <= 57) || (str[i] >= 65 && str[i] <= 90) || (str[i] >= 97 && str[i] <= 122))\
+            valid = true;
+
+        if(!valid) return false;
+    }
+
+    return true;
+}
+
 namespace PacketHandlers::HLogin
 {
 
@@ -99,7 +115,14 @@ void Main(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
         std::unique_ptr<LoginRequest> request = std::make_unique<LoginRequest>();
         request->username = username;
         request->password = password;
-        database.Execute(sql_query.c_str(), validate_account, request.get());
+
+        Client *client_logged = Server().GetClientByAcc(username);
+        bool valid_str = validate_string(username) && validate_string(password);
+
+        if(valid_str && client_logged == 0)
+        {
+            database.Execute(sql_query.c_str(), validate_account, request.get());
+        }
 
         unsigned char answer = 0;
         std::string message = "";
@@ -123,7 +146,12 @@ void Main(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
         }
         else
         {
-            message = "Could not login!";
+            std::string errormsg = "";
+
+            if(client_logged != 0) errormsg = "Already logged in";
+            if(!valid_str) errormsg = "Please use alphanumeric characters only";
+
+            message = "Could not login! -[" + errormsg + "]-";
         }
 
         std::cout << message << std::endl;
@@ -144,10 +172,6 @@ void Main(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
             }
         }
         client->Send(reply);
-    }
-    if(sub_id == 2) // player selected character
-    {
-
     }
 }
 

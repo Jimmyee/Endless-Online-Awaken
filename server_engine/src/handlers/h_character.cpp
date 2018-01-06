@@ -2,6 +2,7 @@
 
 #include "h_character.hpp"
 
+#include "file_data.hpp"
 #include "../server.hpp"
 #include "../const/entity.hpp"
 #include "../client.hpp"
@@ -63,6 +64,20 @@ static int lookup_free_slot(void *data, int argc, char **argv, char **col_name)
     return 0;
 }
 
+static bool validate_string(std::string str)
+{
+    for(std::size_t i = 0; i < str.size(); ++i)
+    {
+        bool valid = false;
+
+        if((str[i] >= 48 && str[i] <= 57) || (str[i] >= 65 && str[i] <= 90) || (str[i] >= 97 && str[i] <= 122))\
+            valid = true;
+
+        if(!valid) return false;
+    }
+
+    return true;
+}
 
 namespace PacketHandlers::HCharacter
 {
@@ -123,12 +138,15 @@ namespace PacketHandlers::HCharacter
 
         std::cout << sql_query << std::endl;
 
-        database.Execute(sql_query.c_str(), lookup_free_slot, request.get());
+        bool valid_str = validate_string(name);
+
+        if(valid_str)
+            database.Execute(sql_query.c_str(), lookup_free_slot, request.get());
 
         unsigned char answer = 0;
         std::string message = "";
 
-        if(request->slots_used < 3)
+        if(request->slots_used < 3 && valid_str)
         {
             sql_query = "SELECT name FROM characters WHERE name='" + name + "';";
 
@@ -160,7 +178,15 @@ namespace PacketHandlers::HCharacter
             }
             else message = "Character of given name already exists.";
         }
-        else message = "No free character slots.";
+        else
+        {
+            std::string errormsg = "";
+
+            if(!valid_str) errormsg = "Please use alphanumeric characters only";
+            else errormsg = "No free character slots";
+
+            message = "Could not create character. -[" + errormsg + "]-";
+        }
 
         std::cout << message << std::endl;
 
@@ -278,6 +304,7 @@ namespace PacketHandlers::HCharacter
             std::cout << "welcome character name: " << character->name << std::endl;
 
             client->state = Client::State::Playing;
+            client->packet_handler.Register(PacketID::FileData, PacketHandlers::FileData::Main, data_ptr);
 
             answer = 1;
             message = "Welcome.";
@@ -338,7 +365,7 @@ namespace PacketHandlers::HCharacter
             {
                 if(it->name == character->name) continue;
 
-                Client *char_client = Server().GetClient(it->name);
+                Client *char_client = Server().GetClientByChar(it->name);
                 char_client->Send(reply);
             }
 
@@ -346,6 +373,17 @@ namespace PacketHandlers::HCharacter
 
             std::cout << "Client state: " << (int)client->state << std::endl;
             std::cout << "Characters on the map: " << map->characters.size() << std::endl;
+
+            reply.clear();
+
+            reply << (unsigned short)PacketID::Character;
+            reply << (unsigned char)4;
+            reply << (unsigned char)2;
+            reply << message;
+            reply << map->revision;
+
+            client->Send(reply);
+
         }
         else
         {
@@ -409,7 +447,7 @@ namespace PacketHandlers::HCharacter
 
         for(auto &it : chars_in_range)
         {
-            Client *char_client = Server().GetClient(it->name);
+            Client *char_client = Server().GetClientByChar(it->name);
 
             std::cout << it->name << std::endl;
             if(!char_client)
@@ -481,7 +519,7 @@ namespace PacketHandlers::HCharacter
 
         for(auto &it : chars_in_range)
         {
-            Client *char_client = Server().GetClient(it->name);
+            Client *char_client = Server().GetClientByChar(it->name);
             char_client->Send(reply);
 
             if(character->GetInRange(it->name) == 0)
@@ -556,7 +594,7 @@ namespace PacketHandlers::HCharacter
 
         for(auto &it : chars_in_range)
         {
-            Client *char_client = Server().GetClient(it->name);
+            Client *char_client = Server().GetClientByChar(it->name);
 
             std::cout << it->name << "\n";
 

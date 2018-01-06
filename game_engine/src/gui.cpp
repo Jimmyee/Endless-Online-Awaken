@@ -420,22 +420,20 @@ void GUI::CharacterList()
     ImGui::Begin("Character list", NULL, flags);
 
     ALLEGRO_BITMAP *bitmap = NULL;
-    bitmap = gfx_loader.GetBitmap(8, 1);
-    int width = al_get_bitmap_width(bitmap);
-    int height = al_get_bitmap_height(bitmap);
-
+    int gfx_offset[2] = { 1, 2 };
     static std::string name = "";
+
     for(std::size_t i = 0; i < client.characters.size(); ++i)
     {
         ImGui::Text(client.characters[i]->name.c_str());
 
-        int w = al_get_bitmap_width(bitmap);
-        int frame_w = w / 4;
-        int gender_offset = (int)client.characters[i]->gender * frame_w;
+        bitmap = gfx_loader.GetBitmap(8, gfx_offset[(int)client.characters[i]->gender], true, ".png");
+        int frame_w = 48;
+        int frame_h = 84;
 
-        ImVec2 uv0 = ImVec2(gender_offset, 0);
-        ImVec2 uv1 = ImVec2(0.25, 1);
-        ImGui::Image(bitmap, ImVec2(width / 4, height), uv0, uv1, ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
+        ImVec2 uv0 = ImVec2(0, 0);
+        ImVec2 uv1 = ImVec2(0.25, 1.0/5);
+        ImGui::Image(bitmap, ImVec2(frame_w, frame_h), uv0, uv1, ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
 
         ImGui::PushID(i);
         if(ImGui::Button("Login"))

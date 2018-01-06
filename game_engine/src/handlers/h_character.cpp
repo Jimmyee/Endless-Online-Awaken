@@ -3,6 +3,7 @@
 #include "h_character.hpp"
 
 #include "h_map.hpp"
+#include "file_data.hpp"
 #include "../client.hpp"
 #include "../gui.hpp"
 #include "../map.hpp"
@@ -147,6 +148,7 @@ namespace PacketHandlers::HCharacter
             GameState().Set(GameState::State::Playing);
 
             client.packet_handler.Register(PacketID::Map, PacketHandlers::HMap::Main, data_ptr);
+            client.packet_handler.Register(PacketID::FileData, PacketHandlers::FileData::Main, data_ptr);
 
             Character character;
             unsigned char char_buf = 0;
@@ -179,6 +181,35 @@ namespace PacketHandlers::HCharacter
             client.character = map.GetCharacter(character.name);
 
             std::cout << "Char pos: " << client.character->x << "x" << client.character->y << std::endl;
+        }
+        if(answer == 2)
+        {
+            unsigned int revision = 0;
+            Map map;
+
+            packet >> revision;
+
+            unsigned char answer = 0;
+
+            if(revision == map.revision)
+            {
+                answer = 1;
+            }
+            else
+            {
+                answer = 2;
+            }
+
+            if(answer == 2)
+            {
+                sf::Packet reply;
+
+                reply << (unsigned short)PacketID::FileData;
+                reply << (unsigned char)1; // map file
+                reply << map.id;
+
+                client.Send(reply);
+            }
         }
 
         std::cout << message << std::endl;

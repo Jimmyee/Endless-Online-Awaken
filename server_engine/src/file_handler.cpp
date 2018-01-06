@@ -114,6 +114,11 @@ std::string FileHandler::GetString()
     return str;
 }
 
+std::string FileHandler::GetData()
+{
+    return this->data;
+}
+
 void FileHandler::AddChar(unsigned char char_)
 {
     this->data += EncodeNumber(char_)[0];

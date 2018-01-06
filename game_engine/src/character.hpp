@@ -29,11 +29,17 @@ public:
     AnimState anim_state;
     Animation animation;
 
+    int screen_x;
+    int screen_y;
+
     Character();
     Character(std::string name, unsigned short map_id, unsigned short x, unsigned short y);
 
     void Tick();
     void Render(int rx, int ry);
+    void RenderNew(int rx, int ry);
+
+    std::vector<int> GetScreenPos();
 
     void Talk(unsigned char channel, std::string message, std::string char_name = "");
     void Face(Direction direction);

@@ -36,6 +36,10 @@ public:
     std::string selected_character;
     unsigned short map_id;
 
+    std::string transfer_data;
+    unsigned int transfer_id;
+    sf::Clock transfer_clock;
+
     Client();
     void Tick();
     bool Connected();

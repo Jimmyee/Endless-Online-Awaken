@@ -13,6 +13,10 @@ Client::Client()
     this->username = "";
     this->selected_character = "";
     this->map_id = 0;
+
+    this->transfer_data = "";
+    this->transfer_id = 0;
+    this->transfer_clock.restart();
 }
 
 void Client::Tick()
@@ -80,6 +84,34 @@ void Client::Tick()
     {
         packet = this->Recv();
         this->packet_handler.Execute(packet);
+    }
+
+    if(this->transfer_data.size() > 0 && this->transfer_clock.getElapsedTime().asMilliseconds() >= 10)
+    {
+        sf::Packet reply;
+
+        reply << (unsigned short)PacketID::FileData;
+        reply << (unsigned char)1;
+        reply << (unsigned char)2;
+        reply << this->transfer_data.substr(0, 10240);
+
+        this->transfer_data.erase(0, 10240);
+
+        this->Send(reply);
+
+        if(this->transfer_data.size() == 0)
+        {
+            reply.clear();
+
+            reply << (unsigned short)PacketID::FileData;
+            reply << (unsigned char)1;
+            reply << (unsigned char)3;
+            reply << this->transfer_id;
+
+            this->Send(reply);
+
+            this->transfer_id = 0;
+        }
     }
 }
 

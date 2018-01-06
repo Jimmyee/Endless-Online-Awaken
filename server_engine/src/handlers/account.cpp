@@ -37,6 +37,37 @@ static int lookup_account(void *data, int argc, char **argv, char **col_name)
     return 0;
 }
 
+static bool validate_string(std::string str)
+{
+    for(std::size_t i = 0; i < str.size(); ++i)
+    {
+        bool valid = false;
+
+        if((str[i] >= 48 && str[i] <= 57) || (str[i] >= 65 && str[i] <= 90) || (str[i] >= 97 && str[i] <= 122))\
+            valid = true;
+
+        if(!valid) return false;
+    }
+
+    return true;
+}
+
+static bool validate_string_email(std::string str)
+{
+    for(std::size_t i = 0; i < str.size(); ++i)
+    {
+        bool valid = false;
+
+        if((str[i] >= 48 && str[i] <= 57) || (str[i] >= 65 && str[i] <= 90) || (str[i] >= 97 && str[i] <= 122) ||
+           str[i] == '@' || str[i] == '.')
+            valid = true;
+
+        if(!valid) return false;
+    }
+
+    return true;
+}
+
 namespace PacketHandlers::HAccount
 {
 
@@ -78,12 +109,24 @@ void Create(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
     Database database;
     std::unique_ptr<CreateRequest> request = std::make_unique<CreateRequest>();
     request->username = username;
-    int ret = database.Execute(sql_query.c_str(), lookup_account, request.get());
+
+    bool valid_str = true;
+
+    if(!validate_string(username)) valid_str = false;
+    if(!validate_string(password)) valid_str = false;
+    if(!validate_string(real_name)) valid_str = false;
+    if(!validate_string(location)) valid_str = false;
+    if(!validate_string_email(email)) valid_str = false;
+
+    int ret = 0;
+
+    if(valid_str)
+        ret = database.Execute(sql_query.c_str(), lookup_account, request.get());
 
     unsigned char answer = 0;
     std::string message = "";
 
-    if(!request->found)
+    if(!request->found && valid_str)
     {
         sql_query = "INSERT INTO accounts VALUES ('" + username + "', '" + password + "', '" + real_name + "', '" \
         + location + "', '" + email + "');";
@@ -97,7 +140,15 @@ void Create(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
             answer = 1;
         }
     }
-    else message = "Could not create account of given username.";
+    else
+    {
+        std::string errormsg = "";
+
+        if(!valid_str) errormsg = "Please use alphanumeric characters only";
+        else errormsg = "Account already exists";
+
+        message = "Could not create account of given username. -[" + errormsg + "]-";
+    }
 
     std::cout << message << std::endl;
 

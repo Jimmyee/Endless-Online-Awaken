@@ -11,7 +11,8 @@ enum class PacketID : unsigned short
     Login,
     Account,
     Character,
-    Map
+    Map,
+    FileData
 };
 
 #endif // CONST_HPP_INCLUDED

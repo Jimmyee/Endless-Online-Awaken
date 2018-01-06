@@ -38,6 +38,7 @@ private:
 public:
     static unsigned int id;
     static std::string name;
+    static unsigned int revision;
     static unsigned short width;
     static unsigned short height;
     static unsigned int fill_tile;

@@ -19,6 +19,9 @@ Character::Character()
     this->direction = (Direction)0;
     this->gender = Gender::Female;
     this->anim_state = AnimState::Stand;
+
+    this->screen_x = 0;
+    this->screen_y = 0;
 }
 
 Character::Character(std::string name, unsigned short map_id, unsigned short x, unsigned short y)
@@ -30,6 +33,9 @@ Character::Character(std::string name, unsigned short map_id, unsigned short x, 
     this->direction = (Direction)0;
     this->gender = Gender::Female;
     this->anim_state = AnimState::Stand;
+
+    this->screen_x = 0;
+    this->screen_y = 0;
 }
 
 void Character::Tick()
@@ -75,8 +81,8 @@ void Character::Render(int rx, int ry)
     int frame_w = w / frames_total;
     int frame_h = h;
 
-    int screen_x = this->x * 64 - this->x * 32 - this->y * 32 + rx;
-    int screen_y = this->y * 16 + this->x * 16 + ry;
+    this->screen_x = this->x * 64 - this->x * 32 - this->y * 32 + rx;
+    this->screen_y = this->y * 16 + this->x * 16 + ry;
 
     screen_x += 32; // half of the tile width
     screen_y -= frame_h;
@@ -107,6 +113,72 @@ void Character::Render(int rx, int ry)
     al_draw_tinted_scaled_rotated_bitmap_region(bitmap, dir_offset[dir] + frame_offset, 0, frame_w, frame_h,
                                                 al_map_rgb(255, 255, 255),
                                                 cx, cy, screen_x, screen_y, scale_offset[dir], 1, 0, 0);
+}
+
+void Character::RenderNew(int rx, int ry)
+{
+    GFXLoader gfx_loader;
+
+    ALLEGRO_BITMAP *bitmap = NULL;
+    int gfx_offset[2] = { 1, 2 };
+    bitmap = gfx_loader.GetBitmap(8, gfx_offset[(int)this->gender], true, ".png");
+
+    int frames_per_anim[3] = { 1, 1, 4 };
+
+    int frame_w = 48;
+    int frame_h = 84;
+
+    this->screen_x = this->x * 64 - this->x * 32 - this->y * 32 + rx;
+    this->screen_y = this->y * 16 + this->x * 16 + ry;
+
+    if(this->anim_state == AnimState::Walk)
+    {
+        int walk_off_x[4] = { -1, -1, 1, 1 };
+        int walk_off_y[4] = { 1, -1, -1, 1 };
+
+        screen_x += ((8 * (4 - (int)this->animation.current_frame)) * walk_off_x[(int)this->direction]);
+        screen_y += ((4 * (4 - (int)this->animation.current_frame)) * walk_off_y[(int)this->direction]);
+    }
+
+    screen_x += 32; // half of the tile width
+    screen_y -= frame_h - 32;
+
+    int dir = (int)this->direction;
+
+    int f_offset_x = frame_w * this->animation.current_frame;
+    int f_offset_y = 0;
+
+    if(this->anim_state == AnimState::Stand)
+    {
+        int anim_offset_x[4] = { 1, 0, 0, 1 };
+        int dir_offset_x[4] = { frame_w * anim_offset_x[dir], 0, 0, frame_w * anim_offset_x[dir] };
+
+        f_offset_x += dir_offset_x[dir];
+    }
+    if(this->anim_state == AnimState::Walk)
+    {
+        int dir_offset_y[4] = { frame_h * 2, frame_h, frame_h, frame_h * 2 };
+
+        f_offset_y += dir_offset_y[dir];
+    }
+
+    int cx = frame_w / 2;
+    int cy = 0;
+    float scale_offset[4] = { -1, -1, 1, 1 };
+
+    al_draw_tinted_scaled_rotated_bitmap_region(bitmap, f_offset_x, f_offset_y, frame_w, frame_h,
+                                                al_map_rgb(255, 255, 255),
+                                                cx, cy, screen_x, screen_y, scale_offset[dir], 1, 0, 0);
+}
+
+std::vector<int> Character::GetScreenPos()
+{
+    std::vector<int> ret;
+
+    ret.push_back(this->screen_x);
+    ret.push_back(this->screen_y);
+
+    return ret;
 }
 
 void Character::Talk(unsigned char channel, std::string message, std::string char_name)

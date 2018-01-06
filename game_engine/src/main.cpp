@@ -10,10 +10,13 @@
 #include "map.hpp"
 #include "map_cursor.hpp"
 #include "map_editor.hpp"
+#include "font_handler.hpp"
 
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_image.h>
+#include <allegro5/allegro_font.h>
+#include <allegro5/allegro_ttf.h>
 #include <imgui.h>
 #include "imgui_impl_a5.h"
 #include <iostream>
@@ -49,6 +52,8 @@ int main(int, char**)
         al_install_mouse();
         al_init_primitives_addon();
         al_init_image_addon();
+        al_init_font_addon();
+        al_init_ttf_addon();
 
         al_set_new_display_flags(flags);
         display = al_create_display(screen_width, screen_height);
@@ -66,7 +71,7 @@ int main(int, char**)
 
         fps_timer = al_create_timer(1.0 / FPS);
         input_timer = al_create_timer(0.01);
-        anim_timer = al_create_timer(0.120);
+        anim_timer = al_create_timer(0.115);
         if(!fps_timer)
         {
             throw std::runtime_error("Could not create timers!");
@@ -101,6 +106,7 @@ int main(int, char**)
         Map map;
         MapCursor map_cursor;
         MapEditor map_editor;
+        FontHandler font_handler;
 
         while(game_state.Get() != GameState::State::Exit)
         {

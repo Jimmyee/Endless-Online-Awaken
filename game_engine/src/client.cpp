@@ -17,6 +17,8 @@ Client::State Client::state;
 std::vector<std::shared_ptr<Character>> Client::characters;
 Character *Client::character;
 
+std::array<int, 3> Client::version;
+
 Client::Client()
 {
     if(!this->initialized_)
@@ -24,6 +26,8 @@ Client::Client()
         this->connected = false;
         this->state = State::Uninitialized;
         this->character = 0;
+
+        this->version = { 0, 0, 1 };
 
         this->initialized_ = true;
     }
@@ -190,6 +194,11 @@ void Client::Init()
     sf::Packet packet;
 
     packet << (unsigned short)PacketID::Init;
+
+    for(int i = 0; i < 3; ++i)
+    {
+        packet << this->version[i];
+    }
 
     this->Send(packet);
 }

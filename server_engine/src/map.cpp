@@ -40,6 +40,7 @@ bool Map::Load(unsigned int id)
     if(!this->exists) return false;
 
     this->name = fh.GetString();
+    this->revision = fh.GetInt();
     this->width = fh.GetShort();
     this->height = fh.GetShort();
     this->fill_tile = fh.GetInt();
@@ -74,6 +75,7 @@ void Map::Save()
     FileHandler fh;
 
     fh.AddString(this->name);
+    fh.AddInt(this->revision);
     fh.AddShort(this->width);
     fh.AddShort(this->height);
     fh.AddInt(this->fill_tile);
@@ -110,6 +112,7 @@ void Map::Reset()
 {
     this->id = 0;
     this->name.clear();
+    this->revision = 0;
     this->width = 1;
     this->height = 1;
     this->fill_tile = 0;

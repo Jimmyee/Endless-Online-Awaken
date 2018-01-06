@@ -6,11 +6,14 @@
 #include <iostream>
 
 bool MapCursor::initialized_ = false;
+std::string MapCursor::nickname;
 
 MapCursor::MapCursor()
 {
     if(!this->initialized_)
     {
+        this->nickname = "";
+
         this->initialized_ = true;
     }
 }
@@ -29,6 +32,8 @@ void MapCursor::Render(int rx, int ry)
     int m_x = m_state.x;
     int m_y = m_state.y;
 
+    bool draw = true;
+
     for(int x = 0; x < map.width; ++x)
     {
         for(int y = 0; y < map.height; ++y)
@@ -39,9 +44,22 @@ void MapCursor::Render(int rx, int ry)
             if(m_x + 8 >= screen_x && m_x + 8 < screen_x + 64 && m_y + 4 >= screen_y && m_y + 8 < screen_y + 32)
             {
                 al_draw_bitmap_region(bitmap, 0, 0, 64, 32, screen_x, screen_y, 0);
+                draw = false;
 
-                return;
+                std::vector<Character *> chars = Map().GetCharactersAt(x, y);
+                if(chars.size() > 0)
+                {
+                    this->nickname = chars[0]->name;
+                }
+                else
+                {
+                    this->nickname = "";
+                }
+
+                break;
             }
         }
+
+        if(!draw) break;
     }
 }

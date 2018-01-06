@@ -37,6 +37,8 @@ public:
     static std::vector<std::shared_ptr<Character>> characters; // account characters
     static Character *character;
 
+    static std::array<int, 3> version;
+
     Client();
     bool Connect(std::string address, unsigned short port);
     void Disconnect();

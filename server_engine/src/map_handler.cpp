@@ -32,3 +32,13 @@ void MapHandler::Clear()
 {
     this->maps.clear();
 }
+
+void MapHandler::Reload()
+{
+    for(auto &it: this->maps)
+    {
+        unsigned int id = it.first;
+
+        it.second.Load(id);
+    }
+}

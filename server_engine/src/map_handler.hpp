@@ -17,6 +17,7 @@ public:
     MapHandler();
     Map *GetMap(unsigned int id);
     void Clear();
+    void Reload();
 };
 
 #endif // MAP_HANDLER_HPP_INCLUDED

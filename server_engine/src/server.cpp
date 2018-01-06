@@ -15,11 +15,14 @@ bool Server::initialized_ = false;
 sf::TcpListener Server::listener;
 std::vector<std::shared_ptr<sf::TcpSocket>> Server::sockets;
 std::vector<std::shared_ptr<Client>> Server::clients;
+std::array<int, 3> Server::client_version;
 
 Server::Server()
 {
     if(!this->initialized_)
     {
+        this->client_version = { 0, 0, 1 };
+
         this->initialized_ = true;
     }
 }
@@ -28,8 +31,11 @@ Server::Server(unsigned short port)
 {
     if(!this->initialized_)
     {
+        this->client_version = { 0, 0, 1 };
+
         this->listener.listen(port);
         this->listener.setBlocking(false);
+
 
         this->initialized_ = true;
 
@@ -145,7 +151,7 @@ void Server::Tick()
 
                     if(len < 13)
                     {
-                        Client *char_client = this->GetClient(it->name);
+                        Client *char_client = this->GetClientByChar(it->name);
                         char_client->Send(packet);
 
                         it->DeleteInRange(character->name);
@@ -184,7 +190,7 @@ void Server::Tick()
     }*/
 }
 
-Client *Server::GetClient(std::string char_name)
+Client *Server::GetClientByChar(std::string char_name)
 {
     for(std::size_t i = 0; i < this->clients.size(); ++i)
     {
@@ -200,4 +206,24 @@ Client *Server::GetClient(std::string char_name)
     }
 
     return 0;
+}
+
+Client *Server::GetClientByAcc(std::string acc_name)
+{
+    for(std::size_t i = 0; i < this->clients.size(); ++i)
+    {
+        if(this->clients[i]->username == "") continue;
+
+        if(this->clients[i]->username == acc_name)
+        {
+            return this->clients[i].get();
+        }
+    }
+
+    return 0;
+}
+
+std::array<int, 3> Server::GetClientVersion()
+{
+    return this->client_version;
 }

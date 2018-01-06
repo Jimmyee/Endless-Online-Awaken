@@ -34,11 +34,12 @@ GFXLoader::Directory::Directory(std::string path, unsigned int id)
     this->id = id;
 }
 
-ALLEGRO_BITMAP *GFXLoader::Directory::GetBitmap(unsigned int id, bool mask)
+ALLEGRO_BITMAP *GFXLoader::Directory::GetBitmap(unsigned int id, bool mask, std::string format)
 {
     if(this->bitmaps.find(id) == this->bitmaps.end())
     {
-        std::string filename = path + "/" + std::to_string(this->id) + "/" + std::to_string(id + 100) + ".bmp";
+        if(format == "") format = ".bmp";
+        std::string filename = path + "/" + std::to_string(this->id) + "/" + std::to_string(id + 100) + format;
         this->bitmaps[id] = al_load_bitmap(filename.c_str());
 
         if(!this->bitmaps[id])
@@ -68,14 +69,14 @@ void GFXLoader::Directory::Clear()
     this->bitmaps.clear();
 }
 
-ALLEGRO_BITMAP *GFXLoader::GetBitmap(unsigned int dir_id, unsigned int bmp_id, bool mask)
+ALLEGRO_BITMAP *GFXLoader::GetBitmap(unsigned int dir_id, unsigned int bmp_id, bool mask, std::string format)
 {
     if(this->directories.find(dir_id) == this->directories.end())
     {
         this->directories[dir_id] = std::make_unique<Directory>(this->path, dir_id);
     }
 
-    return this->directories[dir_id]->GetBitmap(bmp_id, mask);
+    return this->directories[dir_id]->GetBitmap(bmp_id, mask, format);
 }
 
 void GFXLoader::Clear()

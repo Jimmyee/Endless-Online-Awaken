@@ -25,32 +25,60 @@ namespace PacketHandlers::HMap
 
     void Appear(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
     {
-        Character *character = 0;
-        std::string name = "";
+        unsigned char buf = 0;
+        unsigned char entity = 0;
 
-        std::cout << "APPEAR\n";
+        packet >> entity;
 
-        unsigned char char_buf = 0;
-        packet >> name;
-
-        character = Map().GetCharacter(name);
-
-        if(character == 0)
+        if(entity == 1) // character
         {
-            character = new Character();
-            character->name = name;
-            Map().characters.push_back(std::shared_ptr<Character>(character));
+            Character *character = 0;
+            std::string name = "";
 
-            std::cout << "total characters: " << Map().characters.size() << std::endl;
+            packet >> name;
+
+            character = Map().GetCharacter(name);
+
+            if(character == 0)
+            {
+                character = new Character();
+                character->name = name;
+                Map().characters.push_back(std::shared_ptr<Character>(character));
+            }
+
+            packet >> character->map_id;
+            packet >> character->x;
+            packet >> character->y;
+            packet >> buf; character->direction = (Direction)buf;
+            packet >> buf; character->gender = (Gender)buf;
+            packet >> character->speed;
+
+            std::cout << "Hello " << character->name << "." << std::endl;
         }
+        if(entity == 2) // npc
+        {
+            unsigned int id = 0;
+            unsigned int index = 0;
 
-        packet >> character->map_id;
-        packet >> character->x;
-        packet >> character->y;
-        packet >> char_buf; character->direction = (Direction)char_buf;
-        packet >> char_buf; character->gender = (Gender)char_buf;
+            packet >> id;
+            packet >> index;
 
-        //Map().characters.push_back(character);
+            NPC *npc = Map().GetNPC(index);
+
+            if(npc == 0)
+            {
+                npc = new NPC();
+                npc->id = id;
+                npc->index = index;
+                Map().npcs.push_back(std::shared_ptr<NPC>(npc));
+            }
+
+            packet >> npc->map_id;
+            packet >> npc->x;
+            packet >> npc->y;
+            packet >> buf; npc->direction = (Direction)buf;
+            packet >> npc->speed;
+        }
     }
 
     void Leave(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)

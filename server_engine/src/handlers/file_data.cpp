@@ -37,7 +37,7 @@ namespace PacketHandlers::FileData
 
             sf::Packet reply;
 
-            reply << (unsigned short)PacketID::FileData;
+            reply << (unsigned char)PacketID::FileData;
             reply << (unsigned char)1;
             reply << (unsigned char)1;
 

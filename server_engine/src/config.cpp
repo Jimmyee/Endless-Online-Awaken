@@ -31,31 +31,29 @@ void Config::Load(std::string filename)
     {
         lines.push_back(line);
     }
+
     file.close();
 
-    std::size_t pos = 0;
-    for(auto &it : lines)
+    while(lines.size() > 0)
     {
-        line = it;
-        pos = line.find_first_of('[');
-        if(pos == std::string::npos) continue;
-
-        std::size_t equation_pos = line.find_first_of('=');
-        if(equation_pos == std::string::npos)
+        if(lines[0][0] == '#')
         {
-            throw std::runtime_error("Config: syntax error.");
+            lines.erase(lines.begin());
+            continue;
         }
 
-        std::string key = line.substr(pos + 1, equation_pos - pos - 1);
+        std::string key = lines[0];
+        lines.erase(lines.begin());
 
-        pos = line.find_first_of(']');
-        if(pos == std::string::npos)
+        if(lines.size() == 0) continue;
+
+        std::string value = lines[0];
+        lines.erase(lines.begin());
+
+        if(value.size() > 0)
         {
-            throw std::runtime_error("Config: syntax error.");
+            this->entries.push_back(Entry(key, value));
         }
-
-        std::string value = line.substr(equation_pos + 1, pos - equation_pos - 1);
-        this->entries.push_back(Entry(key, value));
     }
 }
 

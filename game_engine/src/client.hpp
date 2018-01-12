@@ -61,6 +61,7 @@ public:
     void Face(Direction direction);
     void Walk(Direction direction);
     void GetInRange(std::string name);
+    void GetInRange(unsigned int index);
 };
 
 #endif // CLIENT_HPP_INCLUDED

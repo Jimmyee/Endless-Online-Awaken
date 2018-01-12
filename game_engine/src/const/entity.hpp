@@ -3,7 +3,7 @@
 #ifndef ENTITY_HPP_INCLUDED
 #define ENTITY_HPP_INCLUDED
 
-enum class Direction
+enum class Direction : unsigned char
 {
     Up,
     Right,

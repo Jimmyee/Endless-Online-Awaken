@@ -2,6 +2,7 @@
 
 #include "init.hpp"
 
+#include "ping.hpp"
 #include "login.hpp"
 #include "account.hpp"
 #include "../client.hpp"
@@ -22,6 +23,7 @@ namespace PacketHandlers::HInit
 
         if(answer == 1)
         {
+            client.packet_handler.Register(PacketID::Ping, PacketHandlers::HPing::Main, data_ptr);
             client.packet_handler.Register(PacketID::Login, PacketHandlers::HLogin::Main, data_ptr);
             client.packet_handler.Register(PacketID::Account, PacketHandlers::HAccount::Main, data_ptr);
             client.state = Client::State::Initialized;

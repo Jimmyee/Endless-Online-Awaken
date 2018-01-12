@@ -40,6 +40,11 @@ public:
     unsigned int transfer_id;
     sf::Clock transfer_clock;
 
+    std::vector<std::pair<sf::Packet, int>> action_queue;
+    sf::Clock action_clock;
+    sf::Clock ping_clock;
+    int latency;
+
     Client();
     void Tick();
     bool Connected();

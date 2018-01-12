@@ -6,11 +6,15 @@
 #include "gfx_loader.hpp"
 #include "gui.hpp"
 #include "map.hpp"
+#include "client.hpp"
+#include "map_cursor.hpp"
 
 #include <imgui.h>
 #include <iostream>
 
 bool MapEditor::initialized_ = false;
+unsigned int MapEditor::graphic_id;
+Map::Layer::Type MapEditor::type;
 int MapEditor::render_xoff;
 int MapEditor::render_yoff;
 
@@ -18,6 +22,8 @@ MapEditor::MapEditor()
 {
     if(!this->initialized_)
     {
+        this->graphic_id = 0;
+        this->type = Map::Layer::Type::Ground;
         this->render_xoff = 0;
         this->render_yoff = 0;
 
@@ -119,8 +125,13 @@ void MapEditor::MakeGUI()
             map.height = i_h;
             map.fill_tile = i_fill;
 
-            this->render_xoff = 0;
-            this->render_yoff = 0;
+            this->Reset();
+
+            Character *character = new Character("Artist", i_id, 1, 1);
+            character->speed = 18;
+
+            Map().characters.push_back(std::shared_ptr<Character>(character));
+            Client().character = character;
 
             ImGui::CloseCurrentPopup();
         }
@@ -145,8 +156,14 @@ void MapEditor::MakeGUI()
             }
             else
             {
-                this->render_xoff = 0;
-                this->render_yoff = 0;
+                this->Reset();
+
+                Character *character = new Character("Artist", i_id, 1, 1);
+                character->speed = 18;
+
+                Map().characters.push_back(std::shared_ptr<Character>(character));
+                Client().character = character;
+
                 ImGui::CloseCurrentPopup();
             }
         }
@@ -180,19 +197,141 @@ void MapEditor::MakeGUI()
 
         ImGui::EndPopup();
     }
+
+    int gid_offset[2] = { 3, 4 };
+
+    ALLEGRO_BITMAP *tile = NULL;
+    int tile_id = 1;
+    int max_w = 0;
+
+    do
+    {
+        tile = gfx_loader.GetBitmap(gid_offset[(int)this->type], tile_id);
+        if(tile != NULL)
+        {
+            int w = al_get_bitmap_width(tile);
+
+            if(w > max_w) max_w = w;
+        }
+        tile_id++;
+    } while(tile != NULL);
+
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
+
+    ImGui::SetNextWindowPos(ImVec2(10, 308));
+    ImGui::SetNextWindowSize(ImVec2(620, 162));
+    ImGui::Begin("Tile sets", 0, flags);
+
+    const char* layer_names[] = { "Ground", "Object" };
+    static int item2 = 0;
+    ImGui::Combo("Layers", &item2, layer_names, IM_ARRAYSIZE(layer_names));
+
+    if(item2 != (int)this->type)
+    {
+        this->type = (Map::Layer::Type)item2;
+        this->graphic_id = 0;
+    }
+
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildWindowRounding, 5.0f);
+    ImGui::BeginChild("Sub", ImVec2(590, 100), true);
+    ImGui::Columns(600 / max_w, "", false);
+
+    tile_id = 1;
+
+    do
+    {
+        tile = gfx_loader.GetBitmap(gid_offset[(std::size_t)this->type], tile_id);
+        if(tile != NULL)
+        {
+            int w = al_get_bitmap_width(tile);
+            int h = al_get_bitmap_height(tile);
+
+            if(ImGui::ImageButton((void*)tile, ImVec2(w, h), ImVec2(0,0), ImVec2(w/w, h/h), 1, ImColor(0,0,0,255)))
+            {
+                this->graphic_id = tile_id;
+            }
+        }
+        tile_id++;
+        ImGui::NextColumn();
+    } while(tile != NULL);
+
+    ImGui::EndChild();
+    ImGui::PopStyleVar();
+
+    ImGui::End();
 }
 
 void MapEditor::ProcessInput()
 {
     InputHandler input_handler;
-    int xoff = 0;
-    int yoff = 0;
+    MapCursor map_cursor;
 
-    if(input_handler.keys[ALLEGRO_KEY_UP]) yoff++;
-    if(input_handler.keys[ALLEGRO_KEY_RIGHT]) xoff--;
-    if(input_handler.keys[ALLEGRO_KEY_DOWN]) yoff--;
-    if(input_handler.keys[ALLEGRO_KEY_LEFT]) xoff++;
+    if(input_handler.mouse[1] && this->graphic_id != 0)
+    {
+        if(!map_cursor.MouseOnMap()) return;
 
-    if(xoff != 0) this->render_xoff += xoff * 7;
-    if(yoff != 0) this->render_yoff += yoff * 7;
+        if(this->graphic_id == 0) return;
+
+        Map map;
+        std::shared_ptr<Map::Tile> tile = map.layers[this->type].tiles[map_cursor.x][map_cursor.y];
+
+        if(tile == 0)
+        {
+            tile = std::shared_ptr<Map::Tile>(new Map::Tile());
+
+            tile->graphic_id = this->graphic_id;
+            tile->x = map_cursor.x;
+            tile->y = map_cursor.y;
+
+            map.layers[this->type].tiles[tile->x][tile->y] = tile;
+        }
+        else
+        {
+            if(tile->graphic_id != this->graphic_id && this->graphic_id != map.fill_tile)
+            {
+                tile->graphic_id = this->graphic_id;
+            }
+        }
+    }
+    if(input_handler.mouse[2])
+    {
+        MapCursor map_cursor;
+
+        if(!map_cursor.MouseOnMap()) return;
+
+        Map map;
+
+        if(map.layers[this->type].tiles[map_cursor.x][map_cursor.y] != 0)
+            map.layers[this->type].tiles[map_cursor.x][map_cursor.y].reset();
+
+        //map.layers[this->type].tiles[map_cursor.x][map_cursor.y] = std::shared_ptr<Map::Tile>(0);
+    }
+
+    if(input_handler.keys[ALLEGRO_KEY_W])
+    {
+        Map::Attribute *att = new Map::Attribute();
+        att->type = Map::Attribute::Type::Wall;
+        att->x = map_cursor.x;
+        att->y = map_cursor.y;
+
+        Map map;
+
+        if(map.atts[map_cursor.x][map_cursor.y] != 0) map.atts[map_cursor.x][map_cursor.y].reset();
+
+        map.atts[map_cursor.x][map_cursor.y] = std::shared_ptr<Map::Attribute>(att);
+    }
+    if(input_handler.keys[ALLEGRO_KEY_E])
+    {
+        Map map;
+
+        if(map.atts[map_cursor.x][map_cursor.y] != 0) map.atts[map_cursor.x][map_cursor.y].reset();
+    }
+}
+
+void MapEditor::Reset()
+{
+    this->graphic_id = 0;
+    this->type = Map::Layer::Type::Ground;
+    this->render_xoff = 0;
+    this->render_yoff = 0;
 }

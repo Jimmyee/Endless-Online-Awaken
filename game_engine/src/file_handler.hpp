@@ -26,6 +26,7 @@ public:
     unsigned int GetThree();
     unsigned int GetInt();
     std::string GetString();
+    std::string GetData();
 
     void AddChar(unsigned char char_);
     void AddShort(unsigned short num);

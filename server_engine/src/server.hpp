@@ -8,6 +8,7 @@
 #include <array>
 
 #include "client.hpp"
+#include "config.hpp"
 
 // class responsible for managing clients and server-client data transfer (monostate)
 class Server
@@ -19,7 +20,11 @@ private:
     static std::vector<std::shared_ptr<Client>> clients;
     static std::array<int, 3> client_version;
 
+
 public:
+    static Config config;
+    static Config welcome_msg;
+
     Server();
     Server(unsigned short port);
     void Tick();

@@ -37,7 +37,7 @@ static int lookup_account(void *data, int argc, char **argv, char **col_name)
     return 0;
 }
 
-static bool validate_string(std::string str)
+static bool is_alphanumeric(std::string str)
 {
     for(std::size_t i = 0; i < str.size(); ++i)
     {
@@ -52,7 +52,7 @@ static bool validate_string(std::string str)
     return true;
 }
 
-static bool validate_string_email(std::string str)
+static bool is_email(std::string str)
 {
     for(std::size_t i = 0; i < str.size(); ++i)
     {
@@ -112,11 +112,11 @@ void Create(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
 
     bool valid_str = true;
 
-    if(!validate_string(username)) valid_str = false;
-    if(!validate_string(password)) valid_str = false;
-    if(!validate_string(real_name)) valid_str = false;
-    if(!validate_string(location)) valid_str = false;
-    if(!validate_string_email(email)) valid_str = false;
+    if(!is_alphanumeric(username)) valid_str = false;
+    if(!is_alphanumeric(password)) valid_str = false;
+    if(!is_alphanumeric(real_name)) valid_str = false;
+    if(!is_alphanumeric(location)) valid_str = false;
+    if(!is_email(email)) valid_str = false;
 
     int ret = 0;
 
@@ -153,7 +153,7 @@ void Create(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
     std::cout << message << std::endl;
 
     sf::Packet reply;
-    reply << (unsigned short)PacketID::Account;
+    reply << (unsigned char)PacketID::Account;
     reply << (unsigned char)1; // sub_id
     reply << answer;
     reply << message;

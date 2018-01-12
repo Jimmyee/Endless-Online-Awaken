@@ -15,7 +15,8 @@ private:
     static bool initialized_;
 
 public:
-    static std::map<unsigned char, bool> keys;
+    static std::map<int, bool> keys;
+    static std::map<unsigned int, bool> mouse;
     static Direction direction;
     static bool rewalk;
 

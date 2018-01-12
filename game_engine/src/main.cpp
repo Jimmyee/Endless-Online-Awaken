@@ -26,10 +26,6 @@
 int main(int, char**)
 {
     const float FPS = 60.0f;
-    std::array<int, 3> version = { 0, 0, 1 };
-
-    std::cout << "Endless Online Awaken Client v" << version[0] << "." << version[1] << "." << version[2] << std::endl
-    << std::endl;
 
     try
     {
@@ -37,7 +33,7 @@ int main(int, char**)
         ALLEGRO_EVENT_QUEUE* event_queue = NULL;
         ALLEGRO_TIMER *fps_timer = NULL;
         ALLEGRO_TIMER *input_timer = NULL;
-        ALLEGRO_TIMER *anim_timer = NULL;
+        ALLEGRO_TIMER *update_timer = NULL;
 
         Config config("./data/config.ini");
 
@@ -71,7 +67,7 @@ int main(int, char**)
 
         fps_timer = al_create_timer(1.0 / FPS);
         input_timer = al_create_timer(0.01);
-        anim_timer = al_create_timer(0.115);
+        update_timer = al_create_timer(0.006);
         if(!fps_timer)
         {
             throw std::runtime_error("Could not create timers!");
@@ -81,10 +77,10 @@ int main(int, char**)
         al_register_event_source(event_queue, al_get_mouse_event_source());
         al_register_event_source(event_queue, al_get_timer_event_source(fps_timer));
         al_register_event_source(event_queue, al_get_timer_event_source(input_timer));
-        al_register_event_source(event_queue, al_get_timer_event_source(anim_timer));
+        al_register_event_source(event_queue, al_get_timer_event_source(update_timer));
         al_start_timer(fps_timer);
         al_start_timer(input_timer);
-        al_start_timer(anim_timer);
+        al_start_timer(update_timer);
 
         float sx = screen_width / (float)640;
         float sy = screen_height / (float)480;
@@ -108,6 +104,11 @@ int main(int, char**)
         MapEditor map_editor;
         FontHandler font_handler;
 
+        std::array<int, 3> version = client.version;
+
+        std::cout << "Endless Online Awaken Client v" << version[0] << "." << version[1] << "." << version[2] <<
+        " pre-alpha." << std::endl << std::endl;
+
         while(game_state.Get() != GameState::State::Exit)
         {
             ALLEGRO_EVENT event;
@@ -121,6 +122,7 @@ int main(int, char**)
             if(get_event)
             {
                 ImGui_ImplA5_ProcessEvent(&event);
+
                 if (event.type == ALLEGRO_EVENT_DISPLAY_CLOSE) game_state.Set(GameState::State::Exit);
                 if (event.type == ALLEGRO_EVENT_DISPLAY_RESIZE)
                 {
@@ -129,7 +131,8 @@ int main(int, char**)
                     Imgui_ImplA5_CreateDeviceObjects();
                 }
 
-                if(event.type == ALLEGRO_EVENT_KEY_DOWN || event.type == ALLEGRO_EVENT_KEY_UP)
+                if(event.type == ALLEGRO_EVENT_KEY_DOWN || event.type == ALLEGRO_EVENT_KEY_UP ||
+                   event.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN || event.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP)
                 {
                     input_handler.ProcessEvent(event);
 
@@ -165,12 +168,9 @@ int main(int, char**)
 
                         if(gui.GetState() == GUI::State::Editor) map_editor.ProcessInput();
                     }
-                    if(event.timer.source == anim_timer)
+                    if(event.timer.source == update_timer)
                     {
-                        for(auto &it : map.characters)
-                        {
-                            it->Tick();
-                        }
+                        map.Tick();
                     }
                 }
             }
@@ -224,6 +224,8 @@ int main(int, char**)
 
                 al_flip_display();
             }
+
+            al_rest(0.0000005);
         }
 
         ImGui_ImplA5_Shutdown();

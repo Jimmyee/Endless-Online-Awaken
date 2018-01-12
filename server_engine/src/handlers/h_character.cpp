@@ -64,7 +64,7 @@ static int lookup_free_slot(void *data, int argc, char **argv, char **col_name)
     return 0;
 }
 
-static bool validate_string(std::string str)
+static bool is_alphanumeric(std::string str)
 {
     for(std::size_t i = 0; i < str.size(); ++i)
     {
@@ -138,7 +138,7 @@ namespace PacketHandlers::HCharacter
 
         std::cout << sql_query << std::endl;
 
-        bool valid_str = validate_string(name);
+        bool valid_str = is_alphanumeric(name);
 
         if(valid_str)
             database.Execute(sql_query.c_str(), lookup_free_slot, request.get());
@@ -157,7 +157,7 @@ namespace PacketHandlers::HCharacter
             if(!request->found)
             {
                 sql_query = "INSERT INTO characters VALUES ('" + client->username + "', '" + name + "', " \
-                + "1, 1, 1, 1, " + std::to_string(gender) + ");";
+                + "1, 1, 1, 1, " + std::to_string(gender) + ", 1" + ");";
 
                 std::cout << sql_query << std::endl;
 
@@ -171,6 +171,7 @@ namespace PacketHandlers::HCharacter
                     character->x = 1;
                     character->y = 1;
                     character->gender = (Gender)gender;
+                    character->speed = 1;
                     client->characters.push_back(character);
                     answer = 1;
                     message = "Character created.";
@@ -192,7 +193,7 @@ namespace PacketHandlers::HCharacter
 
         sf::Packet reply;
 
-        reply << (unsigned short)PacketID::Character;
+        reply << (unsigned char)PacketID::Character;
         reply << (unsigned char)1; // character creation
         reply << answer;
         reply << message;
@@ -251,7 +252,7 @@ namespace PacketHandlers::HCharacter
 
         sf::Packet reply;
 
-        reply << (unsigned short)PacketID::Character;
+        reply << (unsigned char)PacketID::Character;
         reply << (unsigned char)2; // delete character
         reply << answer;
         reply << message;
@@ -266,7 +267,7 @@ namespace PacketHandlers::HCharacter
 
         sf::Packet reply;
 
-        reply << (unsigned short)PacketID::Character;
+        reply << (unsigned char)PacketID::Character;
         reply << (unsigned char)3; // character list
         std::size_t characters = client->characters.size();
         reply << characters;
@@ -301,7 +302,7 @@ namespace PacketHandlers::HCharacter
             character = map->GetCharacter(name);
             client->map_id = character->map_id;
 
-            std::cout << "welcome character name: " << character->name << std::endl;
+            std::cout << "Welcome " << character->name << "." << std::endl;
 
             client->state = Client::State::Playing;
             client->packet_handler.Register(PacketID::FileData, PacketHandlers::FileData::Main, data_ptr);
@@ -311,17 +312,13 @@ namespace PacketHandlers::HCharacter
 
             sf::Packet reply;
 
-            reply << (unsigned short)PacketID::Character;
+            reply << (unsigned char)PacketID::Character;
             reply << (unsigned char)4; // sub id
             reply << answer;
             reply << message;
 
             reply << character->name;
             reply << character->map_id;
-            /*reply << character->x;
-            reply << character->y;
-            reply << (unsigned char)character->direction;
-            reply << (unsigned char)character->gender;*/
 
             std::vector<std::shared_ptr<Character>> chars_in_range;
             for(auto &it : map->characters)
@@ -344,22 +341,36 @@ namespace PacketHandlers::HCharacter
                 reply << it->y;
                 reply << (unsigned char)it->direction;
                 reply << (unsigned char)it->gender;
+                reply << it->speed;
+            }
+
+            reply << map->npcs.size();
+
+            for(auto &npc : map->npcs)
+            {
+                reply << npc->id;
+                reply << npc->index;
+                reply << npc->map_id;
+                reply << npc->x;
+                reply << npc->y;
+                reply << (unsigned char)npc->direction;
+                reply << npc->speed;
             }
 
             client->Send(reply);
 
             reply.clear();
 
-            std::cout << "Character name: " << character->name << std::endl;
-
-            reply << (unsigned short)PacketID::Map;
+            reply << (unsigned char)PacketID::Map;
             reply << (unsigned char)1; // appear
+            reply << (unsigned char)1; // character
             reply << character->name;
             reply << character->map_id;
             reply << character->x;
             reply << character->y;
             reply << (unsigned char)character->direction;
             reply << (unsigned char)character->gender;
+            reply << character->speed;
 
             for(auto &it : chars_in_range)
             {
@@ -371,19 +382,29 @@ namespace PacketHandlers::HCharacter
 
             character->chars_in_range = chars_in_range;
 
-            std::cout << "Client state: " << (int)client->state << std::endl;
-            std::cout << "Characters on the map: " << map->characters.size() << std::endl;
-
             reply.clear();
 
-            reply << (unsigned short)PacketID::Character;
+            reply << (unsigned char)PacketID::Character;
             reply << (unsigned char)4;
             reply << (unsigned char)2;
             reply << message;
             reply << map->revision;
 
+            Server server;
+
+            for(std::size_t i = 0; i < server.welcome_msg.entries.size(); ++i)
+            {
+                reply << server.welcome_msg.entries[i].value;
+            }
+
             client->Send(reply);
 
+            NPC *npc = new NPC();
+            npc->id = RandGen().RandInt(1, 175);
+            npc->x = RandGen().RandInt(0, map->width - 1);
+            npc->y = RandGen().RandInt(0, map->height - 1);
+
+            map->AddNPC(std::shared_ptr<NPC>(npc));
         }
         else
         {
@@ -391,7 +412,7 @@ namespace PacketHandlers::HCharacter
 
             sf::Packet reply;
 
-            reply << (unsigned short)PacketID::Character;
+            reply << (unsigned char)PacketID::Character;
             reply << (unsigned char)4; // sub id
             reply << answer;
             reply << message;
@@ -418,8 +439,6 @@ namespace PacketHandlers::HCharacter
         Map *map = MapHandler().GetMap(client->map_id);
         Character *character = map->GetCharacter(client->selected_character);
 
-        std::cout << character->name << ": " << message << std::endl;
-
         std::vector<std::shared_ptr<Character>> chars_in_range;
         for(auto &it : map->characters)
         {
@@ -435,13 +454,11 @@ namespace PacketHandlers::HCharacter
 
         sf::Packet reply;
 
-        reply << (unsigned short)PacketID::Character;
+        reply << (unsigned char)PacketID::Character;
         reply << (unsigned char)5; // talk
-        reply << (unsigned char)0; // public
+        reply << (unsigned char)1; // public
         reply << character->name;
         reply << message;
-
-        std::cout << "in range: " << chars_in_range.size() << std::endl;
 
         client->Send(reply);
 
@@ -452,7 +469,6 @@ namespace PacketHandlers::HCharacter
             std::cout << it->name << std::endl;
             if(!char_client)
             {
-                std::cout << "character " << it->name << " not found" << std::endl;
                 continue;
             }
 
@@ -462,7 +478,7 @@ namespace PacketHandlers::HCharacter
             {
                 sf::Packet reply_appear;
 
-                reply_appear << (unsigned short)PacketID::Map;
+                reply_appear << (unsigned char)PacketID::Map;
                 reply_appear << (unsigned char)1; // appear
                 reply_appear << it->name;
                 reply_appear << it->map_id;
@@ -481,31 +497,55 @@ namespace PacketHandlers::HCharacter
     void Face(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
     {
         Client *client = (Client*)data_ptr[0];
-        unsigned char direction = 0;
+        unsigned char buf = 0;
 
-        packet >> direction;
+        packet >> buf;
+        Direction direction = (Direction)buf;
 
-        if(direction < 0 || direction > 3) return;
+        if(direction > Direction::Left) return;
         if(client->state != Client::State::Playing) return;
 
         Map *map = MapHandler().GetMap(client->map_id);
         Character *character = map->GetCharacter(client->selected_character);
 
-        character->direction = (Direction)direction;
+        int face_delay = (20 - character->speed) * 2;
+        if(character->action_clocks[Character::Action::Face].getElapsedTime().asMilliseconds() >= face_delay - client->latency)
+        {
+            character->action_clocks[Character::Action::Face].restart();
+            character->direction = direction;
+        }
+
+        if(character->direction != direction)
+        {
+            sf::Packet reply_appear;
+
+            reply_appear << (unsigned char)PacketID::Map;
+            reply_appear << (unsigned char)1; // appear
+            reply_appear << character->name;
+            reply_appear << character->map_id;
+            reply_appear << character->x;
+            reply_appear << character->y;
+            reply_appear << (unsigned char)character->direction;
+            reply_appear << (unsigned char)character->gender;
+
+            client->Send(reply_appear);
+
+            return;
+        }
 
         sf::Packet reply;
 
-        reply << (unsigned short)PacketID::Character;
+        reply << (unsigned char)PacketID::Character;
         reply << (unsigned char)6;
         reply << character->name;
         reply << (unsigned char)character->direction;
-
-        std::cout << "characters on map: " << map->characters.size() << std::endl;
+        reply << character->x;
+        reply << character->y;
 
         std::vector<std::shared_ptr<Character>> chars_in_range;
         for(auto &it : map->characters)
         {
-            if(it->name == character->name) continue;
+            //if(it->name == character->name) continue;
 
             int len = path_length(character->x, character->y, it->x, it->y);
 
@@ -514,8 +554,6 @@ namespace PacketHandlers::HCharacter
                 chars_in_range.push_back(it);
             }
         }
-
-        std::cout << "chars in range: " << chars_in_range.size() << std::endl;
 
         for(auto &it : chars_in_range)
         {
@@ -526,7 +564,7 @@ namespace PacketHandlers::HCharacter
             {
                 sf::Packet reply_appear;
 
-                reply_appear << (unsigned short)PacketID::Map;
+                reply_appear << (unsigned char)PacketID::Map;
                 reply_appear << (unsigned char)1; // appear
                 reply_appear << it->name;
                 reply_appear << it->map_id;
@@ -537,8 +575,6 @@ namespace PacketHandlers::HCharacter
 
                 client->Send(reply_appear);
             }
-
-            std::cout << "SEND\n";
         }
 
         character->chars_in_range = chars_in_range;
@@ -547,11 +583,12 @@ namespace PacketHandlers::HCharacter
     void Walk(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
     {
         Client *client = (Client*)data_ptr[0];
-        unsigned char direction = 0;
+        unsigned char buf = 0;
 
-        packet >> direction;
+        packet >> buf;
+        Direction direction = (Direction)buf;
 
-        if(direction < 0 || direction > 3) return;
+        if(direction > Direction::Left) return;
         if(client->state != Client::State::Playing) return;
 
         Map *map = MapHandler().GetMap(client->map_id);
@@ -559,26 +596,60 @@ namespace PacketHandlers::HCharacter
 
         character->direction = (Direction)direction;
 
-        if(character->direction == Direction::Up && character->y > 0) character->y--;
-        if(character->direction == Direction::Right && character->x < map->width - 1) character->x++;
-        if(character->direction == Direction::Down && character->y < map->height - 1) character->y++;
-        if(character->direction == Direction::Left && character->x > 0) character->x--;
+        unsigned short walk_x = character->x;
+        unsigned short walk_y = character->y;
+
+        if(direction == Direction::Up && character->y > 0) walk_y--;
+        if(direction == Direction::Right && character->x < map->width - 1) walk_x++;
+        if(direction == Direction::Down && character->y < map->height - 1) walk_y++;
+        if(direction == Direction::Left && character->x > 0) walk_x--;
+
+        if((walk_x == character->x && walk_y == character->y) || !map->Walkable(walk_x, walk_y)) return;
+
+        unsigned short source_x = character->x;
+        unsigned short source_y = character->y;
+
+        int walk_delay = (20 - character->speed) * 4;
+        int face_delay = (20 - character->speed) * 2;
+        if(character->action_clocks[Character::Action::Walk].getElapsedTime().asMilliseconds() >= walk_delay - client->latency &&
+           character->action_clocks[Character::Action::Face].getElapsedTime().asMilliseconds() >= face_delay - client->latency)
+        {
+            character->action_clocks[Character::Action::Walk].restart();
+            character->x = walk_x;
+            character->y = walk_y;
+        }
+
+        if(character->x != walk_x || character->y != walk_y || character->direction != direction)
+        {
+            sf::Packet reply_appear;
+
+            reply_appear << (unsigned char)PacketID::Map;
+            reply_appear << (unsigned char)1; // appear
+            reply_appear << character->name;
+            reply_appear << character->map_id;
+            reply_appear << character->x;
+            reply_appear << character->y;
+            reply_appear << (unsigned char)character->direction;
+            reply_appear << (unsigned char)character->gender;
+
+            client->Send(reply_appear);
+
+            return;
+        }
 
         sf::Packet reply;
 
-        reply << (unsigned short)PacketID::Character;
+        reply << (unsigned char)PacketID::Character;
         reply << (unsigned char)7;
         reply << character->name;
         reply << (unsigned char)character->direction;
-        reply << character->x;
-        reply << character->y;
-
-        std::cout << "characters on map: " << map->characters.size() << std::endl;
+        reply << source_x;
+        reply << source_y;
 
         std::vector<std::shared_ptr<Character>> chars_in_range;
         for(auto &it : map->characters)
         {
-            if(it->name == character->name) continue;
+            //if(it->name == character->name) continue;
 
             int len = path_length(character->x, character->y, it->x, it->y);
 
@@ -588,15 +659,9 @@ namespace PacketHandlers::HCharacter
             }
         }
 
-        std::cout << "chars in range: " << chars_in_range.size() << std::endl;
-
-        std::cout << "ELO\n";
-
         for(auto &it : chars_in_range)
         {
             Client *char_client = Server().GetClientByChar(it->name);
-
-            std::cout << it->name << "\n";
 
             char_client->Send(reply);
 
@@ -604,7 +669,7 @@ namespace PacketHandlers::HCharacter
             {
                 sf::Packet reply_appear;
 
-                reply_appear << (unsigned short)PacketID::Map;
+                reply_appear << (unsigned char)PacketID::Map;
                 reply_appear << (unsigned char)1; // appear
                 reply_appear << it->name;
                 reply_appear << it->map_id;
@@ -615,8 +680,6 @@ namespace PacketHandlers::HCharacter
 
                 client->Send(reply_appear);
             }
-
-            std::cout << "SEND\n";
         }
 
         character->chars_in_range = chars_in_range;
@@ -636,8 +699,9 @@ namespace PacketHandlers::HCharacter
 
         sf::Packet reply;
 
-        reply << (unsigned short)PacketID::Map;
+        reply << (unsigned char)PacketID::Map;
         reply << (unsigned char)1; // appear
+        reply << (unsigned char)1; // character
         reply << character->name;
         reply << character->map_id;
         reply << character->x;

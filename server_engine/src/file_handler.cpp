@@ -21,7 +21,7 @@ bool FileHandler::Load(std::string filename)
 
     this->exists = false;
 
-    file.open(filename, std::ifstream::binary);
+    file.open(filename);
     if(!file.is_open() || !file.good())
     {
         std::cout << "File handler: could not load input file." << std::endl;

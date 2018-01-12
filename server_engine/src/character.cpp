@@ -12,10 +12,16 @@ Character::Character()
     this->x = 0;
     this->y = 0;
     this->direction = static_cast<Direction>(0);
-    this->gender = Gender::Female;
+    this->gender = static_cast<Gender>(0);
+    this->speed = 1;
+
+    for(int i = 0; i <= (int)Action::Walk; ++i)
+    {
+        this->action_clocks[(Action)i].restart();
+    }
 }
 
-Character::Character(std::string username, std::string name, unsigned short map_id, unsigned short x, unsigned short y)
+Character::Character(std::string username, std::string name, unsigned int map_id, unsigned short x, unsigned short y)
 {
     this->username = username;
     this->name = name;
@@ -23,18 +29,23 @@ Character::Character(std::string username, std::string name, unsigned short map_
     this->x = x;
     this->y = y;
     this->direction = static_cast<Direction>(0);
-    this->gender = Gender::Female;
+    this->gender = static_cast<Gender>(0);
+    this->speed = 1;
+
+    for(int i = 0; i <= (int)Action::Walk; ++i)
+    {
+        this->action_clocks[(Action)i].restart();
+    }
+}
+
+void Character::Tick()
+{
+
 }
 
 void Character::Render(int rx, int ry)
 {
-    //GFXLoader gfx_loader;
 
-    int screen_x = this->x * 64 - this->x * 32 - this->y * 32 + rx;
-    int screen_y = this->y * 16 + this->x * 16 + ry;
-
-    //ALLEGRO_BITMAP *bitmap = NULL;
-    //bitmap = gfx_loader.GetBitmap(8, 1);
 }
 
 Character *Character::GetInRange(std::string name)

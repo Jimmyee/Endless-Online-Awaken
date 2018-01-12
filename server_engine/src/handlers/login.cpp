@@ -3,6 +3,7 @@
 #include "login.hpp"
 
 #include "h_character.hpp"
+#include "ping.hpp"
 #include "../client.hpp"
 #include "../database.hpp"
 #include "../server.hpp"
@@ -64,6 +65,7 @@ static int get_characters(void *data, int argc, char **argv, char **col_name)
         character->y = std::atoi(argv[4]);
         character->direction = (Direction)std::atoi(argv[5]);
         character->gender = (Gender)std::atoi(argv[6]);
+        character->speed = std::atoi(argv[7]);
 
         charlist->characters.push_back(character);
     }
@@ -71,7 +73,7 @@ static int get_characters(void *data, int argc, char **argv, char **col_name)
     return 0;
 }
 
-static bool validate_string(std::string str)
+static bool is_alphanumeric(std::string str)
 {
     for(std::size_t i = 0; i < str.size(); ++i)
     {
@@ -117,7 +119,7 @@ void Main(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
         request->password = password;
 
         Client *client_logged = Server().GetClientByAcc(username);
-        bool valid_str = validate_string(username) && validate_string(password);
+        bool valid_str = is_alphanumeric(username) && is_alphanumeric(password);
 
         if(valid_str && client_logged == 0)
         {
@@ -140,9 +142,6 @@ void Main(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
             database.Execute(sql_query.c_str(), get_characters, charlist.get());
 
             client->characters = charlist->characters;
-
-            std::cout << client->characters.size() << " characters found on this account." << std::endl;
-            std::cout << "Client state: " << (int)client->state << std::endl;
         }
         else
         {
@@ -157,7 +156,7 @@ void Main(sf::Packet &packet, std::array<intptr_t, 4> data_ptr)
         std::cout << message << std::endl;
 
         sf::Packet reply;
-        reply << (unsigned short)PacketID::Login;
+        reply << (unsigned char)PacketID::Login;
         reply << (unsigned char)1; // sub id
         reply << answer;
         reply << message;

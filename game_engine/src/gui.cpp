@@ -183,6 +183,14 @@ void GUI::SetState(State state)
     {
         this->bg = RandGen().RandInt(30, 36);
     }
+    if(state == State::Editor && Client().character == 0)
+    {
+        Character *character = new Character("Artist", 1, 1, 1);
+        character->speed = 18;
+
+        Map().characters.push_back(std::shared_ptr<Character>(character));
+        Client().character = character;
+    }
 
     this->state = state;
 }
@@ -520,15 +528,18 @@ void GUI::CreateCharacter()
 void GUI::Playing()
 {
     Client client;
+
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar;
 
     ImGui::SetNextWindowPos(ImVec2(10, 308));
     ImGui::SetNextWindowSize(ImVec2(620, 162));
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
     ImGui::Begin("Game Panel", 0, flags);
 
     this->ChatBox();
 
     ImGui::End();
+    ImGui::PopStyleColor();
 }
 
 void GUI::ChatBox()

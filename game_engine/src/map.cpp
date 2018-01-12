@@ -6,6 +6,7 @@
 #include "gui.hpp"
 #include "map_cursor.hpp"
 #include "font_handler.hpp"
+#include "client.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -18,8 +19,15 @@ unsigned int Map::revision;
 unsigned short Map::width;
 unsigned short Map::height;
 unsigned int Map::fill_tile;
-std::array<std::vector<std::shared_ptr<Map::Tile>>, 1> Map::tiles;
+std::map<Map::Layer::Type, Map::Layer> Map::layers;
+std::map<unsigned short, std::map<unsigned short, std::shared_ptr<Map::Attribute>>> Map::atts;
 std::vector<std::shared_ptr<Character>> Map::characters;
+std::vector<std::shared_ptr<NPC>> Map::npcs;
+
+Map::Layer::Layer()
+{
+    this->type = Type::Ground;
+}
 
 Map::Map()
 {
@@ -41,14 +49,6 @@ Map::Map(unsigned int id)
 {
     if(!this->initialized_)
     {
-        this->exists = false;
-        this->id = 0;
-        this->name = "";
-        this->revision = 0;
-        this->width = 1;
-        this->height = 1;
-        this->fill_tile = 0;
-
         this->initialized_ = true;
     }
 
@@ -80,20 +80,38 @@ bool Map::Load(unsigned int id)
     this->height = fh.GetShort();
     this->fill_tile = fh.GetInt();
 
-    std::size_t tiles = fh.GetInt();
-    for(std::size_t i = 0; i < tiles; ++i)
+    unsigned char read_tile = fh.GetChar();
+
+    while(read_tile == 1)
     {
         std::shared_ptr<Tile> tile = std::shared_ptr<Tile>(new Tile());
+
         tile->graphic_id = fh.GetInt();
         tile->x = fh.GetShort();
         tile->y = fh.GetShort();
-        tile->type = (Tile::Type)fh.GetChar();
+        Layer::Type layer_type = (Layer::Type)fh.GetChar();
 
-        this->tiles[0].push_back(tile);
+        this->layers[(Layer::Type)layer_type].tiles[tile->x][tile->y] = tile;
+
+        read_tile = fh.GetChar();
+    }
+
+    read_tile = fh.GetChar();
+
+    while(read_tile == 1)
+    {
+        std::shared_ptr<Attribute> att = std::shared_ptr<Attribute>(new Attribute());
+
+        att->type = (Attribute::Type)fh.GetChar();
+        att->x = fh.GetShort();
+        att->y = fh.GetShort();
+
+        this->atts[att->x][att->y] = att;
+
+        read_tile = fh.GetChar();
     }
 
     std::cout << "Map loaded: '" << this->name << "' " << this->width << "x" << this->height << std::endl;
-    std::cout << "Fill tile: " << this->fill_tile << std::endl;
 
     return true;
 }
@@ -115,78 +133,237 @@ void Map::Save()
     fh.AddShort(this->height);
     fh.AddInt(this->fill_tile);
 
-    std::size_t tiles = this->tiles[0].size();
-    fh.AddInt(tiles);
-
-    for(std::size_t i = 0; i < this->tiles[0].size(); ++i)
+    for(auto &l : this->layers)
     {
-        fh.AddInt(this->tiles[0][i]->graphic_id);
-        fh.AddShort(this->tiles[0][i]->x);
-        fh.AddShort(this->tiles[0][i]->y);
-        fh.AddChar((unsigned char)this->tiles[0][i]->type);
+        for(auto &t : l.second.tiles)
+        {
+            for(auto &tt : t.second)
+            {
+                std::shared_ptr<Tile> tile = tt.second;
+
+                if(tile == 0) continue;
+
+                fh.AddChar(1);
+                fh.AddInt(tile->graphic_id);
+                fh.AddShort(tile->x);
+                fh.AddShort(tile->y);
+                fh.AddChar((unsigned int)l.first);
+            }
+        }
     }
+
+    fh.AddChar(0);
+
+    for(auto &a : this->atts)
+    {
+        for(auto &aa : a.second)
+        {
+            std::shared_ptr<Attribute> att = aa.second;
+
+            if(att == 0) continue;
+
+            fh.AddChar(1);
+            fh.AddChar((unsigned int)att->type);
+            fh.AddShort(att->x);
+            fh.AddShort(att->y);
+        }
+    }
+
+    fh.AddChar(0);
 
     fh.Save(filename);
     this->exists = fh.Exists();
 }
 
+void Map::Tick()
+{
+    for(auto &it : this->characters)
+    {
+        it->Tick();
+    }
+
+    for(auto &it : this->npcs)
+    {
+        it->Tick();
+    }
+}
+
 void Map::Render(int rx, int ry)
 {
+    Character *character = Client().character;
+    unsigned short start_x = 0;
+    unsigned short start_y = 0;
+    unsigned short end_x = this->width > 0? this->width - 1 : 1;
+    unsigned short end_y = this->height > 0? this->height - 1 : 1;
+
+    if(character != 0)
+    {
+        start_x = character->x > 16? character->x - 16 : 0;
+        start_y = character->y > 16? character->y - 16 : 0;
+        end_x = character->x + 16 > this->width? this->width - 1 : character->x + 16;
+        end_y = character->y + 16 > this->height? this->height - 1 : character->y + 16;
+    }
+
     if(this->fill_tile != 0)
     {
         ALLEGRO_BITMAP *tilegfx = GFXLoader().GetBitmap(3, this->fill_tile);
 
-        al_hold_bitmap_drawing(true);
-        for(int x = 0; x < this->width; ++x)
+        if(tilegfx != 0)
         {
-            for(int y = 0; y < this->height; ++y)
-            {
-                int screen_x = x * 64 - x * 32 - y * 32 + rx;
-                int screen_y = y * 16 + x * 16 + ry;
+            al_hold_bitmap_drawing(true);
 
-                if(tilegfx != 0) al_draw_bitmap(tilegfx, screen_x, screen_y, 0);
+            for(unsigned short x = start_x; x <= end_x; ++x)
+            {
+                for(unsigned short y = start_y; y <= end_y; ++y)
+                {
+                    int screen_x = x * 64 - x * 32 - y * 32 + rx;
+                    int screen_y = y * 16 + x * 16 + ry;
+
+                    al_draw_bitmap(tilegfx, screen_x, screen_y, 0);
+                }
+            }
+
+            al_hold_bitmap_drawing(false);
+        }
+    }
+
+    int gid_offset[2] = { 3, 4 };
+    bool cursor_drawn = false;
+
+    for(int i = 0; i < (int)Layer::Type::Object; ++i) // render stagged tiles for ground layer only
+    {
+        std::map<unsigned int, ALLEGRO_BITMAP *> bitmaps;
+        std::map<unsigned int, std::vector<std::shared_ptr<Tile>>> tiles_stagged;
+
+        for(unsigned short x = start_x; x <= end_x; ++x)
+        {
+            for(unsigned short y = start_y; y <= end_y; ++y)
+            {
+                std::shared_ptr<Tile> tile = this->layers[(Layer::Type)i].tiles[x][y];
+
+                if(tile == 0) continue;
+
+                ALLEGRO_BITMAP *tilegfx = NULL;
+
+                if(bitmaps.find(tile->graphic_id) == bitmaps.end())
+                {
+                    tilegfx = GFXLoader().GetBitmap(gid_offset[i], tile->graphic_id);
+                    bitmaps[tile->graphic_id] = tilegfx;
+                }
+
+                if(tile->x >= start_x && tile->x <= end_x && tile->y >= start_y && tile->y <= end_y)
+                    tiles_stagged[tile->graphic_id].push_back(tile);
             }
         }
-        al_hold_bitmap_drawing(false);
-    }
 
-    std::map<unsigned int, ALLEGRO_BITMAP *> bitmaps;
-    std::map<unsigned int, std::vector<std::shared_ptr<Tile>>> tiles_stagged;
-
-    for(auto &it : this->tiles[0])
-    {
-        ALLEGRO_BITMAP *tilegfx = NULL;
-        if(bitmaps.find(it->graphic_id) == bitmaps.end())
+        for(auto &ts : tiles_stagged)
         {
-            tilegfx = GFXLoader().GetBitmap(3, it->graphic_id);
-            bitmaps[it->graphic_id] = tilegfx;
-        }
-
-        tiles_stagged[it->graphic_id].push_back(it);
-    }
-
-    for(auto &ts : tiles_stagged)
-    {
-        al_hold_bitmap_drawing(true);
-        for(auto &it : ts.second)
-        {
-            int screen_x = it->x * 64 - it->x * 32 - it->y * 32 + rx;
-            int screen_y = it->y * 16 + it->x * 16 + ry;
-
-            al_draw_bitmap(bitmaps[ts.first], screen_x, screen_y, 0);
-        }
-        al_hold_bitmap_drawing(false);
-    }
-
-    MapCursor().Render(rx, ry);
-
-    for(int x = 0; x < this->width; ++x)
-    {
-        for(int y = 0; y < this->height; ++y)
-        {
-            for(auto &it : this->characters)
+            al_hold_bitmap_drawing(true);
+            for(auto &tile : ts.second)
             {
-                if(it->x == x && it->y == y) it->RenderNew(rx, ry);
+                if(bitmaps[ts.first] == NULL) continue;
+
+                int screen_x = tile->x * 64 - tile->x * 32 - tile->y * 32 + rx;
+                int screen_y = tile->y * 16 + tile->x * 16 + ry;
+
+                int w = al_get_bitmap_width(bitmaps[ts.first]);
+                int h = al_get_bitmap_height(bitmaps[ts.first]);
+
+                if(i == (int)Layer::Type::Object)
+                {
+                    if(w > 64)
+                    {
+                        screen_x -= w / 2;
+                        screen_x += 32;
+                    }
+                    if(h > 32)
+                    {
+                        screen_y -= h;
+                        screen_y += 32;
+                    }
+                    if(w < 64)
+                    {
+                        screen_x -= w / 2;
+                        screen_x += 32;
+                        if(h > 32) screen_y -= 8;
+                    }
+                    if(h < 32)
+                    {
+                        screen_y -= h / 2;
+                        screen_y += 16;
+                    }
+                }
+
+                al_draw_bitmap(bitmaps[ts.first], screen_x, screen_y, 0);
+            }
+            al_hold_bitmap_drawing(false);
+        }
+
+        if(i == (int)Layer::Type::Ground)
+        {
+            MapCursor().Render(rx, ry);
+            cursor_drawn = true;
+        }
+    }
+
+    if(!cursor_drawn)
+    {
+        MapCursor().Render(rx, ry);
+    }
+
+    // object layer + characters
+    for(unsigned short x = start_x; x <= end_x; ++x)
+    {
+        for(unsigned short y = start_y; y <= end_y; ++y)
+        {
+            std::shared_ptr<Tile> tile = this->layers[Layer::Type::Object].tiles[x][y];
+
+            if(tile != 0)
+            {
+                ALLEGRO_BITMAP *tilegfx = GFXLoader().GetBitmap(gid_offset[(int)Layer::Type::Object], tile->graphic_id);
+
+                if(tilegfx != 0)
+                {
+                    int screen_x = tile->x * 64 - tile->x * 32 - tile->y * 32 + rx;
+                    int screen_y = tile->y * 16 + tile->x * 16 + ry;
+
+                    int w = al_get_bitmap_width(tilegfx);
+                    int h = al_get_bitmap_height(tilegfx);
+
+                    if(w > 64)
+                    {
+                        screen_x -= w / 2;
+                        screen_x += 32;
+                    }
+                    if(h > 32)
+                    {
+                        screen_y -= h;
+                        screen_y += 32;
+                    }
+                    if(w < 64)
+                    {
+                        screen_x -= w / 2;
+                        screen_x += 32;
+                        if(h > 32) screen_y -= 8;
+                    }
+                    if(h < 32)
+                    {
+                        screen_y -= h / 2;
+                        screen_y += 16;
+                    }
+
+                    al_draw_bitmap(tilegfx, screen_x, screen_y, 0);
+                }
+            }
+
+            for(auto &charr : this->characters)
+            {
+                if(charr->x == x && charr->y == y) charr->RenderNew(rx, ry);
+            }
+
+            for(auto &npc : this->npcs)
+            {
+                if(npc->x == x && npc->y == y) npc->Render(rx, ry);
             }
         }
     }
@@ -211,19 +388,6 @@ void Map::Render(int rx, int ry)
     }
 }
 
-Map::Tile *Map::GetTile(unsigned char layer, unsigned short x, unsigned short y)
-{
-    for(auto &it : this->tiles[layer])
-    {
-        if(it->x == x && it->y == y)
-        {
-            return it.get();
-        }
-    }
-
-    return 0;
-}
-
 void Map::Reset()
 {
     this->id = 0;
@@ -232,8 +396,11 @@ void Map::Reset()
     this->width = 1;
     this->height = 1;
     this->fill_tile = 0;
-    this->tiles[0].clear();
+
+    this->layers.clear();
+    this->atts.clear();
     this->characters.clear();
+    this->npcs.clear();
 }
 
 std::vector<Character *> Map::GetCharactersAt(unsigned short x, unsigned short y)
@@ -274,16 +441,62 @@ void Map::DeleteCharacter(std::string name)
     }
 }
 
-/*void Map::UpdateCharacter(std::string name, Character character)
+std::vector<NPC *> Map::GetNPCsAt(unsigned short x, unsigned short y)
 {
-    for(auto &it : this->characters)
+    std::vector<NPC *> ret;
+
+    for(auto &it: npcs)
     {
-        if(it.name == name)
+        if(it->x == x && it->y == y)
         {
-            std::cout << "dir changed from " << (int)it.direction << " to ";
-            it = character;
-            std::cout << (int)it.direction << std::endl;
+            ret.push_back(it.get());
+        }
+    }
+
+    return ret;
+}
+
+NPC *Map::GetNPC(unsigned int index)
+{
+    for(auto &it: npcs)
+    {
+        if(it->index == index)
+            return it.get();
+    }
+
+    return 0;
+}
+
+void Map::DeleteNPC(unsigned int index)
+{
+    for(std::size_t i = 0; i < this->npcs.size(); ++i)
+    {
+        if(this->npcs[i]->index == index)
+        {
+            this->npcs.erase(this->npcs.begin() + i);
             return;
         }
     }
-}*/
+}
+
+bool Map::Walkable(unsigned short x, unsigned short y, bool entity)
+{
+    if(this->atts[x][y] != 0)
+    {
+        if(this->atts[x][y]->type == Attribute::Type::Wall) return false;
+    }
+
+    if(!entity) return true;
+
+    for(auto &it: this->characters)
+    {
+        if(it->x == x && it->y == y) return false;
+    }
+
+    for(auto &it: this->npcs)
+    {
+        if(it->x == x && it->y == y) return false;
+    }
+
+    return true;
+}

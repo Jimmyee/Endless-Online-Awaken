@@ -12,21 +12,23 @@
 
 int main()
 {
-    std::array<int, 3> version = { 0, 0, 1 };
-
-    std::cout << "Endless Online Awaken Server v" << version[0] << "." << version[1] << "." << version[2] << std::endl
-    << std::endl;
-
     try
     {
-        Config config("data/config.ini");
         Server server(8078);
+
+        std::array<int, 3> version = server.GetClientVersion();
+
+        std::cout << "Endless Online Awaken Server v" << version[0] << "." << version[1] << "." << version[2] << std::endl
+        << std::endl;
+
         ServerState server_state;
         Database database("data/eo.db");
 
         while(server_state.Get() != ServerState::State::Exit)
         {
             server.Tick();
+            sf::Time time = sf::milliseconds(5);
+            sf::sleep(time);
         }
     }
     catch(std::runtime_error rt_err)

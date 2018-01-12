@@ -5,11 +5,13 @@
 #include "client.hpp"
 #include "map.hpp"
 #include "map_editor.hpp"
+#include "gui.hpp"
 
 #include <iostream>
 
 bool InputHandler::initialized_ = false;
-std::map<unsigned char, bool> InputHandler::keys;
+std::map<int, bool> InputHandler::keys;
+std::map<unsigned int, bool> InputHandler::mouse;
 Direction InputHandler::direction;
 bool InputHandler::rewalk;
 
@@ -36,13 +38,22 @@ void InputHandler::ProcessEvent(ALLEGRO_EVENT event)
     {
         this->keys[event.keyboard.keycode] = false;
     }
+
+    if(event.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN)
+    {
+        this->mouse[event.mouse.button] = true;
+    }
+    if(event.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP)
+    {
+        this->mouse[event.mouse.button] = false;
+    }
 }
 
 void InputHandler::Process()
 {
     Client client;
 
-    if(client.state != Client::State::Playing) return;
+    if(client.state != Client::State::Playing && GUI().GetState() != GUI::State::Editor) return;
 
     if(client.character->anim_state == Character::AnimState::Stand || client.character->anim_state == Character::AnimState::Walk)
     {
@@ -85,12 +96,30 @@ void InputHandler::CharacterMovement()
         if(client.character->direction != this->direction && !this->rewalk)
         {
             client.character->Face(this->direction);
-            client.Face(this->direction);
+            if(client.character->anim_state == Character::AnimState::Stand && client.character->animation.play)
+                client.Face(this->direction);
         }
         else
         {
-            client.character->Walk(this->direction);
-            client.Walk(this->direction);
+            unsigned short walk_x = client.character->x;
+            unsigned short walk_y = client.character->y;
+
+            if(this->direction == Direction::Up) walk_y--;
+            if(this->direction == Direction::Right) walk_x++;
+            if(this->direction == Direction::Down) walk_y++;
+            if(this->direction == Direction::Left) walk_x--;
+
+            if(Map().Walkable(walk_x, walk_y))
+            {
+                if(direction == Direction::Up && client.character->y == 0) return;
+                if(direction == Direction::Right && client.character->x == Map().width - 1) return;
+                if(direction == Direction::Down && client.character->y == Map().height - 1) return;
+                if(direction == Direction::Left && client.character->x == 0) return;
+
+                client.character->Walk(this->direction);
+                if(client.character->anim_state == Character::AnimState::Walk)
+                    client.Walk(this->direction);
+            }
         }
     }
 

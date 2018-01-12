@@ -44,7 +44,7 @@ void PacketHandler::Clear()
 
 void PacketHandler::Execute(sf::Packet &packet)
 {
-    unsigned short id;
+    unsigned char id;
     PacketID packet_id;
 
     packet >> id;

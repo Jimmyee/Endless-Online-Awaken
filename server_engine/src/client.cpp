@@ -17,6 +17,11 @@ Client::Client()
     this->transfer_data = "";
     this->transfer_id = 0;
     this->transfer_clock.restart();
+
+    this->action_clock.restart();
+    this->ping_clock.restart();
+
+    this->latency = 0;
 }
 
 void Client::Tick()
@@ -90,7 +95,7 @@ void Client::Tick()
     {
         sf::Packet reply;
 
-        reply << (unsigned short)PacketID::FileData;
+        reply << (unsigned char)PacketID::FileData;
         reply << (unsigned char)1;
         reply << (unsigned char)2;
         reply << this->transfer_data.substr(0, 10240);
@@ -103,7 +108,7 @@ void Client::Tick()
         {
             reply.clear();
 
-            reply << (unsigned short)PacketID::FileData;
+            reply << (unsigned char)PacketID::FileData;
             reply << (unsigned char)1;
             reply << (unsigned char)3;
             reply << this->transfer_id;
@@ -112,6 +117,28 @@ void Client::Tick()
 
             this->transfer_id = 0;
         }
+    }
+
+    if(this->action_queue.size() > 0)
+    {
+        if(this->action_clock.getElapsedTime().asMilliseconds() >= this->action_queue[0].second)
+        {
+            this->action_clock.restart();
+
+            this->Send(this->action_queue[0].first);
+            this->action_queue.erase(this->action_queue.begin());
+        }
+    }
+
+    if(this->ping_clock.getElapsedTime().asSeconds() >= 30)
+    {
+        sf::Packet packet;
+
+        packet << (unsigned char)PacketID::Ping;
+
+        this->Send(packet);
+
+        this->ping_clock.restart();
     }
 }
 

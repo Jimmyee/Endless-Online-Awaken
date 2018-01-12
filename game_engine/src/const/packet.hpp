@@ -5,14 +5,16 @@
 
 #include <SFML/Network.hpp>
 
-enum class PacketID : unsigned short
+enum class PacketID : unsigned char
 {
     Init,
     Login,
     Account,
     Character,
+    NPC,
     Map,
-    FileData
+    FileData,
+    Ping
 };
 
 #endif // CONST_HPP_INCLUDED

@@ -33,13 +33,12 @@ namespace PacketHandlers::FileData
         }
         if(phase == 2)
         {
-            while(!packet.endOfPacket())
-            {
-                char data_block[1024] = "";
-                packet >> data_block;
+            std::size_t psize = packet.getDataSize();
 
-                file_data += data_block;
-            }
+            char data_block[psize] = "";
+            packet >> data_block;
+
+            file_data += data_block;
         }
         if(phase == 3)
         {
@@ -57,7 +56,6 @@ namespace PacketHandlers::FileData
             }
             else if(!file.good())
             {
-                printf("Data stream error");
                 throw std::runtime_error("Map: data stream error.");
             }
 

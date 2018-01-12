@@ -193,7 +193,7 @@ void Client::Init()
 {
     sf::Packet packet;
 
-    packet << (unsigned short)PacketID::Init;
+    packet << (unsigned char)PacketID::Init;
 
     for(int i = 0; i < 3; ++i)
     {
@@ -207,7 +207,7 @@ void Client::Login(std::string username, std::string password)
 {
     sf::Packet packet;
 
-    packet << (unsigned short)PacketID::Login;
+    packet << (unsigned char)PacketID::Login;
     packet << (unsigned char)1; // sub id = login request
     packet << username;
     packet << password;
@@ -219,7 +219,7 @@ void Client::CreateAccount(std::array<std::string, 5> input_data)
 {
     sf::Packet packet;
 
-    packet << (unsigned short)PacketID::Account;
+    packet << (unsigned char)PacketID::Account;
     packet << (unsigned char)1; // sub id
     for(int i = 0; i < 5; ++i)
     {
@@ -233,7 +233,7 @@ void Client::CreateCharacter(std::string name, Gender gender)
 {
     sf::Packet packet;
 
-    packet << (unsigned short)PacketID::Character;
+    packet << (unsigned char)PacketID::Character;
     packet << (unsigned char)1; // sub id - create
     packet << name;
     packet << (unsigned char)gender;
@@ -245,7 +245,7 @@ void Client::DeleteCharacter(std::string name)
 {
     sf::Packet packet;
 
-    packet << (unsigned short)PacketID::Character;
+    packet << (unsigned char)PacketID::Character;
     packet << (unsigned char)2; // sub id - delete
     packet << name;
 
@@ -256,7 +256,7 @@ void Client::CharacterList()
 {
     sf::Packet packet;
 
-    packet << (unsigned short)PacketID::Character;
+    packet << (unsigned char)PacketID::Character;
     packet << (unsigned char)3; // sub id - character list
 
     this->Send(packet);
@@ -266,7 +266,7 @@ void Client::SelectCharacter(std::string name)
 {
     sf::Packet packet;
 
-    packet << (unsigned short)PacketID::Character;
+    packet << (unsigned char)PacketID::Character;
     packet << (unsigned char)4; // sub id - select
     packet << name;
 
@@ -277,7 +277,7 @@ void Client::Talk(unsigned char channel, std::string message, std::string char_n
 {
     sf::Packet packet;
 
-    packet << (unsigned short)PacketID::Character;
+    packet << (unsigned char)PacketID::Character;
     packet << (unsigned char)5;
     packet << channel;
     packet << message;
@@ -289,7 +289,7 @@ void Client::Face(Direction direction)
 {
     sf::Packet packet;
 
-    packet << (unsigned short)PacketID::Character;
+    packet << (unsigned char)PacketID::Character;
     packet << (unsigned char)6;
     packet << (unsigned char)direction;
 
@@ -300,7 +300,7 @@ void Client::Walk(Direction direction)
 {
     sf::Packet packet;
 
-    packet << (unsigned short)PacketID::Character;
+    packet << (unsigned char)PacketID::Character;
     packet << (unsigned char)7;
     packet << (unsigned char)direction;
 
@@ -311,9 +311,20 @@ void Client::GetInRange(std::string name)
 {
     sf::Packet packet;
 
-    packet << (unsigned short)PacketID::Character;
+    packet << (unsigned char)PacketID::Character;
     packet << (unsigned char)8;
     packet << name;
+
+    this->Send(packet);
+}
+
+void Client::GetInRange(unsigned int index)
+{
+    sf::Packet packet;
+
+    packet << (unsigned char)PacketID::NPC;
+    packet << (unsigned char)2;
+    packet << index;
 
     this->Send(packet);
 }

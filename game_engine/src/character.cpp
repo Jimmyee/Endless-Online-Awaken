@@ -4,8 +4,6 @@
 
 #include "gfx_loader.hpp"
 #include "client.hpp"
-#include "input_handler.hpp"
-#include "map.hpp"
 
 #include <allegro5/allegro.h>
 #include <iostream>
@@ -18,13 +16,17 @@ Character::Character()
     this->y = 0;
     this->direction = (Direction)0;
     this->gender = Gender::Female;
+    this->speed = 1;
+
     this->anim_state = AnimState::Stand;
 
     this->screen_x = 0;
     this->screen_y = 0;
+
+    this->frame_counter = 0;
 }
 
-Character::Character(std::string name, unsigned short map_id, unsigned short x, unsigned short y)
+Character::Character(std::string name, unsigned int map_id, unsigned short x, unsigned short y)
 {
     this->name = name;
     this->map_id = map_id;
@@ -32,17 +34,24 @@ Character::Character(std::string name, unsigned short map_id, unsigned short x, 
     this->y = y;
     this->direction = (Direction)0;
     this->gender = Gender::Female;
+    this->speed = 1;
+
     this->anim_state = AnimState::Stand;
 
     this->screen_x = 0;
     this->screen_y = 0;
+
+    this->frame_counter = 0;
 }
 
 void Character::Tick()
 {
-    InputHandler input_handler;
+    if(this->frame_counter >= 20 - this->speed)
+    {
+        this->frame_counter = 0;
 
-    this->animation.Tick();
+        this->animation.Tick();
+    }
 
     if(!this->animation.play && this->animation.current_frame != 0)
     {
@@ -55,13 +64,9 @@ void Character::Tick()
         {
             this->animation.Clear();
         }
-
-        /*if(input_handler.rewalk)
-        {
-            this->Walk(input_handler.direction);
-            input_handler.rewalk = false;
-        }*/
     }
+
+    this->frame_counter++;
 }
 
 void Character::Render(int rx, int ry)
@@ -122,8 +127,6 @@ void Character::RenderNew(int rx, int ry)
     ALLEGRO_BITMAP *bitmap = NULL;
     int gfx_offset[2] = { 1, 2 };
     bitmap = gfx_loader.GetBitmap(8, gfx_offset[(int)this->gender], true, ".png");
-
-    int frames_per_anim[3] = { 1, 1, 4 };
 
     int frame_w = 48;
     int frame_h = 84;
@@ -201,11 +204,6 @@ void Character::Face(Direction direction)
 void Character::Walk(Direction direction)
 {
     if(this->animation.play) return;
-
-    if(direction == Direction::Up && this->y == 0) return;
-    if(direction == Direction::Right && this->x == Map().width - 1) return;
-    if(direction == Direction::Down && this->y == Map().height - 1) return;
-    if(direction == Direction::Left && this->x == 0) return;
 
     this->direction = direction;
 

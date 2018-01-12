@@ -16,12 +16,16 @@ sf::TcpListener Server::listener;
 std::vector<std::shared_ptr<sf::TcpSocket>> Server::sockets;
 std::vector<std::shared_ptr<Client>> Server::clients;
 std::array<int, 3> Server::client_version;
+Config Server::config;
+Config Server::welcome_msg;
 
 Server::Server()
 {
     if(!this->initialized_)
     {
         this->client_version = { 0, 0, 1 };
+
+        this->welcome_msg.Load("data/welcome.ini");
 
         this->initialized_ = true;
     }
@@ -36,6 +40,7 @@ Server::Server(unsigned short port)
         this->listener.listen(port);
         this->listener.setBlocking(false);
 
+        this->welcome_msg.Load("data/welcome.ini");
 
         this->initialized_ = true;
 
@@ -110,6 +115,7 @@ void Server::Tick()
                     sql_query += ", y = " + std::to_string(character->y);
                     sql_query += ", direction = " + std::to_string((int)character->direction);
                     sql_query += ", gender = " + std::to_string((int)character->gender);
+                    sql_query += ", speed = " + std::to_string(character->speed);
 
                     sql_query += " WHERE name = '" + character->name + "';";
 
@@ -130,6 +136,7 @@ void Server::Tick()
                 sql_query += ", y = " + std::to_string(character->y);
                 sql_query += ", direction = " + std::to_string((int)character->direction);
                 sql_query += ", gender = " + std::to_string((int)character->gender);
+                sql_query += ", speed = " + std::to_string(character->speed);
 
                 sql_query += " WHERE name = '" + character->name + "';";
 
@@ -138,7 +145,7 @@ void Server::Tick()
                 database.Execute(sql_query.c_str(), 0, 0);
 
                 sf::Packet packet;
-                packet << (unsigned short)PacketID::Map;
+                packet << (unsigned char)PacketID::Map;
                 packet << (unsigned char)2; // leave
                 packet << character->name;
 
@@ -182,12 +189,12 @@ void Server::Tick()
         }
     }
 
-    /*int offset = 0;
-    for(std::size_t i = 0; i < dead_clients.size(); ++i)
+    MapHandler map_handler;
+
+    for(auto &it : map_handler.maps)
     {
-        this->clients.erase(this->clients.begin() + std::get<1>(dead_clients[i]) + offset);
-        offset--;
-    }*/
+        it.second.Tick();
+    }
 }
 
 Client *Server::GetClientByChar(std::string char_name)

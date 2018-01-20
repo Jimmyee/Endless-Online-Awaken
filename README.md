@@ -44,6 +44,8 @@ You need to create new SQLite3 database. (example database: server_engine/data/e
 
 ### Have fun!
 
+Please see https://www.patreon.com/Jimmyee for additional information about what's going on. Also, there you have an opportunity to donate this project (become a Patron) if you are willing to :)
+
 
 This project is released under MIT licence. See LICENCE file for more info.
 

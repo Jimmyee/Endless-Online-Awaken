@@ -43,4 +43,4 @@ Please see https://www.patreon.com/Jimmyee for additional information about what
 
 This project is released under MIT licence. See LICENCE file for more info.
 
-Copyright © Jimmyee (Karol Woszczek) 2017-2018.
+Copyright © Karol Woszczek.

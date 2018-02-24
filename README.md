@@ -1,8 +1,5 @@
 # Endless-Online-Awaken
-This is Endless Online client/server clone. 
-
-
-Endless Online Awaken is an open source client/server for Endless Online. It is intended to support all features of the original Endless Online v28 and to be continuation of this game.
+Endless Online Awaken is an open source client/server for Endless Online. It is intended to support all features of the original Endless Online v28 and many things more.
 
 
 ### Current version: 0.0.1 pre-alpha

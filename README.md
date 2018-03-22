@@ -1,6 +1,7 @@
 # Endless-Online-Awaken
 Endless Online Awaken is an open source client/server for Endless Online. It is intended to support all features of the original Endless Online v28 and many things more.
 
+Please visit this website for more information: http://eoawaken.co.nf/
 
 ### Current version: 0.0.1 pre-alpha
 
